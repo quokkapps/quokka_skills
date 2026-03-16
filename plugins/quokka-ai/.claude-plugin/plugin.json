@@ -1,8 +1,10 @@
 {
   "name": "quokka-ai",
   "description": "Quokkapps team skills for cross-platform feature porting (Android/iOS). Includes code-scan and GSD-based porting commands.",
-  "author": {
-    "name": "Quokkapps",
-    "email": "dev@quokkapps.com"
-  }
+  "category": "development",
+  "source": {
+    "source": "url",
+    "url": "https://github.com/quokkapps/quokka_skills.git"
+  },
+  "homepage": "https://github.com/quokkapps/quokka_skills.git"
 }

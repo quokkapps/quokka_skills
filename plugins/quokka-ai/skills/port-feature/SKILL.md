@@ -1,6 +1,6 @@
 ---
-description: Scan source code by feature description (no GSD artifacts needed) and generate a comprehensive porting document for the target platform. Auto-detects source platform (Android→iOS or iOS→Android). Use when porting features that were NOT built with GSD.
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, AskUserQuestion
+name: port-feature
+description: "Scan source code by feature description (no GSD artifacts needed) and generate a comprehensive porting document for the target platform. Auto-detects source platform (Android/iOS). Use when porting features NOT built with GSD."
 ---
 
 <objective>
