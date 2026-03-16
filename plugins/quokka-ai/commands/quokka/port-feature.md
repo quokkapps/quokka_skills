@@ -1,6 +1,7 @@
 ---
-name: port-feature
-description: "Scan source code by feature description (no GSD artifacts needed) and generate a comprehensive porting document for the target platform. Auto-detects source platform (Android/iOS). Use when porting features NOT built with GSD."
+name: quokka:port-feature
+description: Scan source code by feature description (no GSD artifacts needed) and generate a comprehensive porting document for the target platform. Auto-detects source platform (Android/iOS).
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, AskUserQuestion
 ---
 
 <objective>

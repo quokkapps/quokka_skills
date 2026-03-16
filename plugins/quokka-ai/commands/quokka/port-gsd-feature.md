@@ -1,6 +1,7 @@
 ---
-name: port-gsd-feature
-description: "Analyze a completed GSD feature (phase, milestone, quick task) and generate a comprehensive porting document for the target platform. Auto-detects source platform (Android/iOS). Self-contained spec ready for gsd:new-milestone on target repo."
+name: quokka:port-gsd-feature
+description: Analyze a completed GSD feature (phase, milestone, quick task) and generate a comprehensive porting document for the target platform. Auto-detects source platform (Android/iOS).
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, AskUserQuestion
 ---
 
 <objective>
