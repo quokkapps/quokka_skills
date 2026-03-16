@@ -182,6 +182,20 @@ every ambiguity becomes a blocker:**
 - **Clarify shared event names.** If multiple distinct actions share the same event name
   (disambiguated by a parameter), call this out explicitly so the agent understands the
   dispatch pattern.
+- **Flag intentional inversions.** If two fields represent the same concept with inverted
+  semantics (e.g., `speakerStatus = "off"` when `muteAllAudio = "on"`), call this out
+  explicitly so the agent doesn't "fix" what looks like a bug.
+- **Map discrete UI controls to parameter values.** If a UI control (e.g., a 3-segment
+  volume picker: Softer/Normal/Louder) maps to a numeric parameter, document the exact
+  mapping (e.g., Softer=0.5, Normal=1.0, Louder=1.5). Don't leave the agent guessing.
+- **Document event firing order when it matters.** If state must be updated before analytics
+  fires (so the metadata snapshot reflects the new state), state this as an ordering
+  constraint in the business logic, not buried in a test case.
+- **Resolve naming mismatches.** If a function name doesn't match the component/action it
+  fires (e.g., `logVirtualTourClick` fires `inTourListSTopsCta_click`), clarify what the
+  function actually does vs what the event name suggests.
+- **Specify lifecycle timing.** For screen view events, state exactly when they fire
+  (on screen create, on resume, once per session, etc.).
 </step>
 
 <step name="reverse_engineer_requirements">
@@ -554,7 +568,7 @@ alone might be ambiguous. Keep focused and brief.}
 
 Output path:
 - If `--output` provided, use that
-- Otherwise: `.planning/ports/{feature-slug}-port.md`
+- Otherwise: `.planning/ports/{feature-slug}-port-gsd-feature.md`
 
 Create `.planning/ports/` directory if it doesn't exist.
 </step>
