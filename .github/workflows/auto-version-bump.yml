@@ -1,34 +1,36 @@
-name: Auto Version Bump
+name: Sync Version from Tag
 
 on:
   push:
-    branches: [main]
-    paths-ignore:
-      - 'package.json'
-      - '.github/workflows/auto-version-bump.yml'
+    tags:
+      - 'v*'
 
 jobs:
-  bump:
+  sync-version:
     runs-on: ubuntu-latest
-    # Skip if the last commit was from this action
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Bump patch version
+      - name: Update package.json to match tag
         run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          CURRENT=$(node -p "require('./package.json').version")
+          if [ "$TAG" = "$CURRENT" ]; then
+            echo "Already at v${TAG}"
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          npm version patch --no-git-tag-version
-          VERSION=$(node -p "require('./package.json').version")
+          npm version "$TAG" --no-git-tag-version
           git add package.json
-          git commit -m "Bump version to v${VERSION} [skip ci]"
-          git push
+          git commit -m "Release v${TAG}"
+          git push origin main
