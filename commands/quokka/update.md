@@ -7,36 +7,36 @@ allowed-tools:
 ---
 
 <objective>
-Pull the latest Quokka AI commands from GitHub and replace the current commands.
+Check for updates and install the latest Quokka AI commands from GitHub.
 </objective>
 
 <process>
 
-**Step 1: Check current version**
+**Step 1: Check current installed version**
 
-Read the current installed commands to note what exists:
 ```bash
-ls .claude/commands/quokka/ 2>/dev/null
+cat .claude/commands/quokka/.version 2>/dev/null || echo "unknown"
 ```
 
-**Step 2: Run the installer from GitHub**
+**Step 2: Check latest available version**
 
-Execute the install script directly from the repo — this pulls the latest version and overwrites all commands:
+```bash
+npm view github:quokkapps/quokka_skills version 2>/dev/null || curl -s https://raw.githubusercontent.com/quokkapps/quokka_skills/main/package.json | grep '"version"' | head -1
+```
+
+**Step 3: Run the installer**
+
+This pulls the latest and replaces all commands:
 ```bash
 npx --yes github:quokkapps/quokka_skills
 ```
 
-**Step 3: Verify installation**
-
-List the updated commands:
-```bash
-ls .claude/commands/quokka/
-```
+The installer will show:
+- "Already up to date" if no new version
+- "Updating from vX to vY" if there's a new version
 
 **Step 4: Report to user**
 
-Tell the user:
-- Which commands were updated
-- Remind them to restart Claude Code session to pick up the changes
+If updated, remind them to restart Claude Code to pick up changes.
 
 </process>

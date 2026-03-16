@@ -74,8 +74,25 @@ if (hasUninstall) {
   process.exit(0);
 }
 
-// Install
-console.log('Installing commands...');
+// Version file tracks installed version
+const versionFile = path.join(claudeDir, 'commands', 'quokka', '.version');
+
+// Check current installed version
+let installedVersion = null;
+if (fs.existsSync(versionFile)) {
+  installedVersion = fs.readFileSync(versionFile, 'utf-8').trim();
+}
+
+if (installedVersion === pkg.version) {
+  console.log(`${green}Already up to date.${reset} (v${pkg.version})\n`);
+  process.exit(0);
+}
+
+if (installedVersion) {
+  console.log(`Updating from v${installedVersion} to v${pkg.version}...\n`);
+} else {
+  console.log('Installing commands...\n');
+}
 
 if (!fs.existsSync(commandsSrc)) {
   console.error(`${red}✘${reset} Source commands not found at ${commandsSrc}`);
@@ -84,10 +101,13 @@ if (!fs.existsSync(commandsSrc)) {
 
 copyDir(commandsSrc, commandsDest);
 
+// Write version marker
+fs.writeFileSync(versionFile, pkg.version + '\n');
+
 const files = fs.readdirSync(commandsDest).filter(f => f.endsWith('.md'));
 for (const file of files) {
   console.log(`  ${green}✓${reset} commands/quokka/${file}`);
 }
 
-console.log(`\n${green}Installed ${files.length} commands.${reset}`);
-console.log(`${dim}Commands available: ${files.map(f => '/quokka:' + f.replace('.md', '')).join(', ')}${reset}\n`);
+console.log(`\n${green}Installed ${files.length} commands (v${pkg.version}).${reset}`);
+console.log(`${dim}Commands: ${files.map(f => '/quokka:' + f.replace('.md', '')).join(', ')}${reset}\n`);
