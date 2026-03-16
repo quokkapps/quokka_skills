@@ -147,8 +147,8 @@ Read every collected artifact and extract:
 
 For each file listed in the plan/summary `files_modified` or `key-files`:
 
-Use Agent tool (subagent_type: Explore) to read each modified file and extract what it does
-in **platform-agnostic terms**.
+Read each modified file and extract what it does in **platform-agnostic terms**.
+Use Agent (subagent_type: Explore) for deep tracing if the feature spans many files.
 
 Only extract categories that are present — not every file will have all of these:
 
@@ -645,4 +645,3 @@ on screen?" or "what unit is this duration in?" — the document is not done yet
 These belong to the destination project, not this document.
 
 </guidelines>
-</output>

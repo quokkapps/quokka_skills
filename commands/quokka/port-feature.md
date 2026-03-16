@@ -590,4 +590,3 @@ on screen?" or "what unit is this duration in?" — the document is not done yet
 These belong to the destination project, not this document.
 
 </guidelines>
-</output>
