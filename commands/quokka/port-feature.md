@@ -85,17 +85,21 @@ The agent has NO source code access. Every ambiguity = blocker.
 - **Document firing order.** State updated before analytics fires? State as ordering constraint.
 - **Resolve naming mismatches.** `logVirtualTourClick` fires `inTourListStopsCta_click`? Clarify.
 - **Specify lifecycle timing.** Screen view fires on create? resume? once per session?
+- **Define every referenced model.** If pseudocode mentions `place.isStop`, `Data Models` must define `Place` with ALL fields. No dangling references.
+- **Capture conditional UI states.** Not just what exists — when is it disabled, dimmed, hidden, non-interactive? Map state → visibility/enabled for every control.
+- **Find no-op/early-return paths.** Null checks, empty guards, boundary conditions, permissions missing — these are edge cases. Document what happens when the feature does nothing.
 
 ## 4. Reverse-engineer requirements
 
-**Functional:** Each behaviour gets:
+**Group by behaviour** — each group describes one coherent user-facing capability:
 - ID: `PORT-{NN}`
 - Description + acceptance criteria (observable, testable)
 - Source evidence (file/function)
+- Related requirements grouped under the same behaviour heading
 
 **Non-functional:** Performance, accessibility, offline, concurrency, error recovery.
 
-**Edge cases:** Empty states, errors, boundaries. Tests are valuable — they encode explicit developer thinking.
+**Edge cases:** Empty states, errors, boundaries, no-op paths. Tests are valuable — they encode explicit developer thinking.
 
 ## 5. Generate porting document
 
@@ -133,11 +137,16 @@ Fill template below. **Omit empty sections entirely.**
 
 ## Requirements
 
-### Functional
+### Functional (grouped by behaviour)
+
+#### {Behaviour Group Name}
 **PORT-01: {Title}**
 - Description: {what}
 - Acceptance Criteria: {testable statements}
 - Source: `{file}:{function}`
+
+**PORT-02: {Related Title}**
+- ...
 
 ### Non-Functional
 - **Performance:** {if applicable}
@@ -220,6 +229,9 @@ Fill template below. **Omit empty sections entirely.**
 **Interactions:**
 | Element | Location | Interaction | Behaviour |
 |---|---|---|---|
+**Conditional States:**
+| Element | Condition | Visual State | Interactive? |
+|---|---|---|---|
 **Navigation:** Entry / Exit
 
 ### Sheets / Dialogs
@@ -239,6 +251,13 @@ Fill template below. **Omit empty sections entirely.**
 
 ## External Dependencies
 | Dependency | Purpose | Category |
+|---|---|---|
+
+---
+
+## Key Decisions from Source
+{Reverse-engineer WHY from comments, naming conventions, and non-obvious logic paths.}
+| Decision | Evidence | Rationale |
 |---|---|---|
 
 ---
