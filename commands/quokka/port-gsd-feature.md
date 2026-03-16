@@ -79,11 +79,13 @@ Only categories that exist:
 - **State model** — full shape: every field, type, possible values, default. Critical.
 - **Data models** — fields, types, nullability, defaults, relationships, enums
 - **Business logic** — state machines, calculations, validations, branches, errors. **Pseudocode only.**
-- **UI behaviour** — screen purpose, spatial layout (natural language), state→UI, interactions + positions, navigation, animations
+- **UI behaviour** — screen purpose, spatial layout (natural language + indented layout tree for complex screens), state→UI mapping, interactions + positions, navigation, animations (with concrete numeric parameters from source constants)
 - **Network contracts** — endpoints, methods, request/response, auth, retry
 - **Persistence** — entities, queries, caching, migrations
 - **Analytics** — event names, params + computation, screen tracking
 - **External deps** — third-party libs, system APIs
+- **String resources** — every user-visible string: labels, placeholders, titles, messages, button text, error/success messages, notification strings
+- **Assets** — every image, illustration, icon: dimensions, source type (bundled/remote/system), visual description
 
 For each: WHAT it does + WHY (from planning docs) + source file ref.
 
@@ -103,6 +105,10 @@ The agent has NO source code access. Every ambiguity = blocker.
 - **Define every referenced model.** If pseudocode mentions `place.isStop`, `Data Models` must define `Place` with ALL fields. No dangling references.
 - **Capture conditional UI states.** Not just what exists — when is it disabled, dimmed, hidden, non-interactive? Map state → visibility/enabled for every control.
 - **Find no-op/early-return paths.** Null checks, empty guards, boundary conditions, permissions missing — these are edge cases. Document what happens when the feature does nothing.
+- **Parameterise animations.** For every animation: extract the concrete numeric values from source constants. Duration in ms, damping ratio as decimal, stiffness as number, easing curve name. Name the source constant and its resolved value. Not "spring, medium bouncy" → "spring(dampingRatio=0.5, stiffness=400)" with source: `DampingRatioMediumBouncy = 0.5f`. Not "300ms tween" → "tween(duration=300ms, easing=LinearEasing)".
+- **Specify list/collection behaviour.** For every list displayed: how many items shown initially? Is it paginated? What triggers loading more? What does "View All" do — navigate or expand in-place? Document the empty state and the loading state for the list.
+- **Specify notifications fully.** For every notification: exact title string, body string, tap action (deep link URI or screen), auto-cancel behaviour, channel/category ID, icon source. A notification that says "appears with app icon and end-tour title" is not implementable.
+- **Catalogue assets.** For every image, illustration, or icon referenced: dimensions, source type (bundled asset / remote URL / system icon), brief visual description of what it depicts. The implementing agent cannot guess what "success illustration" looks like.
 
 ## 5. Consolidate requirements
 
@@ -250,6 +256,15 @@ Fill template below. **Omit empty sections entirely.**
 ### Screen: {Name}
 **Purpose:** {goal}
 **Layout:** {spatial description in natural language}
+**Layout Tree** (required for screens with 8+ elements):
+```
+[Screen/Sheet Name]
+  ├─ Element (alignment, style)
+  ├─ Element (dimensions)
+  │   ├─ Sub-element
+  │   └─ Sub-element
+  └─ Element (full-width, style)
+```
 **Visual States:** Loading / Content / Empty / Error
 **Interactions:**
 | Element | Location | Interaction | Behaviour |
@@ -261,6 +276,22 @@ Fill template below. **Omit empty sections entirely.**
 
 ### Sheets / Dialogs
 {Trigger, content, dismiss}
+
+---
+
+## String Resources
+{Collect ALL user-visible strings. Every label, placeholder, title, message, button text, error message, notification string.}
+| Key (suggested) | Value (English) | Context |
+|---|---|---|
+| review_prompt_title | "How would you rate your experience?" | Review form heading |
+
+---
+
+## Asset Inventory
+{Every image, illustration, icon referenced in the UI spec.}
+| Asset | Dimensions | Source Type | Description |
+|---|---|---|---|
+| success_illustration | 288x150dp | Bundled | Traveler celebrating with confetti |
 
 ---
 
@@ -345,6 +376,8 @@ Document is ready when an agent with **zero source access** can:
 7. Choose their own architecture — doc describes WHAT, not HOW
 
 If agent would ask "what are the possible values?" / "where is this button?" / "what unit?" → not done.
+
+If agent would ask "what does this illustration look like?" / "what's the notification body text?" / "how many items before View All?" / "what's the damping ratio?" → not done.
 
 ## NEVER include
 - Target-platform architecture recommendations
