@@ -1,0 +1,20 @@
+{
+  "name": "quokka-skills",
+  "owner": {
+    "name": "Quokkapps",
+    "email": "dev@quokkapps.com"
+  },
+  "plugins": [
+    {
+      "name": "quokka-port-commands",
+      "description": "Cross-platform feature porting commands (Android/iOS). Scan source code or GSD artifacts to generate comprehensive porting documents.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Quokkapps",
+        "email": "dev@quokkapps.com"
+      },
+      "source": "./plugins/quokka-port-commands",
+      "category": "development"
+    }
+  ]
+}

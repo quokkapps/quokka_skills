@@ -11,11 +11,17 @@ Shared Claude Code plugin for the Quokkapps team.
 
 ## Installation
 
+**Step 1: Add the marketplace (one-time)**
 ```bash
-claude plugin add --from git@github.com:quokkapps/quokka_skills.git
+claude plugin marketplace add quokkapps/quokka_skills
 ```
 
-Updates are pulled automatically.
+**Step 2: Install the plugin**
+```bash
+claude plugin install quokka-port-commands
+```
+
+Updates are pulled automatically when Claude Code refreshes marketplaces.
 
 ## Usage
 
