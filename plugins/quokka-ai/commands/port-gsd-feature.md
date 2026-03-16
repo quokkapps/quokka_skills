@@ -1,16 +1,6 @@
 ---
-name: port-gsd-feature
 description: Analyze a completed GSD feature (phase, milestone, quick task) and generate a comprehensive porting document for the target platform. Auto-detects source platform (Android→iOS or iOS→Android). The output is a self-contained spec ready to feed into gsd:new-milestone or gsd:new-project on the target repo.
-argument-hint: "<source-path-or-ref> [--to ios|android] [--output <path>]"
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Bash
-  - Agent
-  - AskUserQuestion
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, AskUserQuestion
 ---
 
 <objective>
