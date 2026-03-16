@@ -65,5 +65,5 @@ Both commands output a platform-agnostic porting document to `.planning/ports/`.
 ## How it works
 
 - Commands are installed as standard Claude Code slash commands in `.claude/commands/quokka/`
-- Version is auto-bumped on every push to `main` via GitHub Actions
+- Versioning is controlled by git tags (e.g., `git tag v1.1.0 && git push --tags`)
 - The install script (`bin/install.js`) handles install, update, and uninstall
