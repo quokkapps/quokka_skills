@@ -13,250 +13,127 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-<objective>
-Analyze a completed feature from GSD planning artifacts and source code, then generate a
-**platform-agnostic porting document**.
+# Objective
 
-The output describes WHAT the feature does and HOW it behaves, not how to implement it on any
-specific target platform. The destination team or AI agent decides their own architecture,
-frameworks, and patterns. This document gives them everything they need to make those decisions
-and build a faithful port.
+Analyze completed GSD feature from planning artifacts + source code → generate **platform-agnostic porting document**.
 
-Unlike `/quokka:port-feature` (which scans code by description), this command reads GSD planning
-artifacts (PLAN.md, SUMMARY.md, VERIFICATION.md, etc.) for richer context about requirements,
-decisions, and acceptance criteria — then cross-references with actual source code.
-</objective>
+Output describes WHAT the feature does, not HOW to implement on any target platform.
 
-<arguments>
-Parse the command arguments:
+Unlike `/quokka:port-feature` (scans code by description), this reads GSD artifacts (PLAN.md, SUMMARY.md, VERIFICATION.md, etc.) for richer context — then cross-references with actual code.
 
-**Required: Source reference** (first positional argument)
-Accepts any of these formats:
-- Phase directory: `.planning/phases/16-intour-navigation-interactions/`
-- Phase number: `phase 16` or `16`
-- Milestone name: `milestone v1.2` or `v1.2`
-- Milestone directory: `.planning/milestones/v1.2-phases/`
-- Quick task directory: `.planning/quick/2-research-audio-ducking-source/`
-- Quick task number: `quick 2`
-- Debug session: `.planning/debug/review-bottomsheet-not-showing/`
+# Arguments
 
-**Optional flags:**
-- `--output <path>` — Output path for the porting document (default: `.planning/ports/`)
+**Required:** Source reference (first positional arg). Accepts:
+- Phase: `.planning/phases/16-intour-nav/` or `phase 16` or `16`
+- Milestone: `milestone v1.2` or `v1.2` or `.planning/milestones/v1.2-phases/`
+- Quick task: `.planning/quick/2-research-audio/` or `quick 2`
+- Debug session: `.planning/debug/review-bottomsheet/`
 
-If no arguments provided:
-```
-ERROR: Source reference required
-Usage: /quokka:port-gsd-feature <source-ref> [--output <path>]
+**Optional:**
+- `--output <path>` — output path (default: `.planning/ports/`)
 
-Examples:
-  /quokka:port-gsd-feature .planning/phases/16-intour-navigation-interactions/
-  /quokka:port-gsd-feature phase 16
-  /quokka:port-gsd-feature milestone v1.2
-  /quokka:port-gsd-feature .planning/quick/2-research-audio-ducking-source/
-  /quokka:port-gsd-feature quick 2
-```
-Exit.
-</arguments>
+No args → show usage error and exit.
 
-<process>
+# Process
 
-<step name="resolve_source">
-**1. Resolve the source reference to planning artifacts**
+## 1. Resolve source → planning artifacts
 
-Based on the argument format, locate all relevant files:
+**Phase:** Read `ROADMAP.md` → read all files in `.planning/phases/{dir}/`: `*-PLAN.md`, `*-SUMMARY.md`, `*-VERIFICATION.md`, `*-UAT.md` → read `REQUIREMENTS.md`
 
-**For a phase:**
-- Read `.planning/ROADMAP.md` to find the phase entry
-- Read all files in `.planning/phases/{phase-dir}/`:
-  - `*-PLAN.md` — Implementation plan with tasks, interfaces, and requirements
-  - `*-SUMMARY.md` — What was actually built, decisions made, deviations
-  - `*-VERIFICATION.md` — Verification report with truth assertions
-  - `*-UAT.md` — User acceptance test cases (if exists)
-- Read `.planning/REQUIREMENTS.md` for requirement definitions referenced by the phase
+**Milestone:** Read milestone roadmap → read ALL phase plans/summaries/verifications → read `REQUIREMENTS.md`
 
-**For a milestone:**
-- Read the milestone roadmap (e.g., `.planning/milestones/v1.2-ROADMAP.md`)
-- Read ALL phase plans, summaries, and verifications within the milestone
-- Read `.planning/REQUIREMENTS.md`
+**Quick task:** Read all files in `.planning/quick/{dir}/`
 
-**For a quick task:**
-- Read all files in `.planning/quick/{task-dir}/`
+**Debug session:** Read all files in `.planning/debug/{dir}/`
 
-**For a debug session:**
-- Read all files in `.planning/debug/{session-dir}/`
-
-Collect all artifact paths into a list for processing.
-</step>
-
-<step name="detect_source_platform">
-**2. Detect source platform**
-
-Examine the current repository for platform markers:
+## 2. Detect source platform
 
 | Marker | Platform |
 |---|---|
-| `build.gradle.kts` / `build.gradle` | Android (Kotlin) |
-| `*.xcodeproj` / `Package.swift` / `*.xcworkspace` | iOS (Swift) |
-| `pubspec.yaml` | Flutter (Dart) |
-| `package.json` with react-native | React Native |
+| `build.gradle.kts` / `build.gradle` | Android |
+| `*.xcodeproj` / `Package.swift` | iOS |
+| `pubspec.yaml` | Flutter |
+| `package.json` + react-native | React Native |
 
-Store `SOURCE_PLATFORM` for context in the output document. The porting document itself is
-platform-agnostic — source-platform notes appear only as supplementary annotations where they
-help clarify an otherwise ambiguous behaviour.
-</step>
+Store as `SOURCE_PLATFORM`. Platform notes in output are supplementary only.
 
-<step name="analyze_planning_docs">
-**3. Deep-analyse planning documents**
+## 3. Deep-analyse planning documents
 
-Read every collected artifact and extract:
+**From PLAN.md:** Objective, requirement IDs, success criteria, interfaces, tasks, verification steps, file modifications
 
-**From PLAN.md files:**
-- Phase/task objective and purpose
-- Requirements IDs and descriptions
-- Success criteria (observable truths)
-- Interface definitions (types, contracts, APIs)
-- Task breakdown with actions
-- Verification steps
-- File modifications and their purposes
+**From SUMMARY.md:** What was accomplished, key decisions + WHY, deviations from plan, patterns, files modified
 
-**From SUMMARY.md files:**
-- What was actually accomplished
-- Key decisions made and WHY
-- Deviations from plan
-- Patterns established
-- Files created/modified
+**From VERIFICATION.md:** Verified truths → become acceptance criteria, requirement satisfaction, anti-patterns
 
-**From VERIFICATION.md files:**
-- All verified truths (these become the target's acceptance criteria)
-- Requirement satisfaction evidence
-- Anti-patterns to avoid
+**From UAT.md:** Test scenarios, expected behaviours, edge cases
 
-**From UAT.md files (if present):**
-- Manual test scenarios
-- Expected behaviours
-- Edge cases tested
+**From ROADMAP.md:** Phase dependencies, goals, success criteria
 
-**From ROADMAP.md:**
-- Phase dependencies
-- Phase goals
-- Success criteria summaries
-</step>
+## 4. Analyse source code
 
-<step name="analyze_source_code">
-**4. Analyse the actual source code implementation**
+For each file in plan/summary `files_modified` or `key-files`:
 
-For each file listed in the plan/summary `files_modified` or `key-files`:
+Read each file. Extract in **platform-agnostic terms**. Use Agent (subagent_type: Explore) for deep tracing if many files.
 
-Read each modified file and extract what it does in **platform-agnostic terms**.
-Use Agent (subagent_type: Explore) for deep tracing if the feature spans many files.
+Only categories that exist:
+- **State model** — full shape: every field, type, possible values, default. Critical.
+- **Data models** — fields, types, nullability, defaults, relationships, enums
+- **Business logic** — state machines, calculations, validations, branches, errors. **Pseudocode only.**
+- **UI behaviour** — screen purpose, spatial layout (natural language), state→UI, interactions + positions, navigation, animations
+- **Network contracts** — endpoints, methods, request/response, auth, retry
+- **Persistence** — entities, queries, caching, migrations
+- **Analytics** — event names, params + computation, screen tracking
+- **External deps** — third-party libs, system APIs
 
-Only extract categories that are present — not every file will have all of these:
+For each: WHAT it does + WHY (from planning docs) + source file ref.
 
-- **State model** — the full shape of the state object(s) the feature reads and writes. This is
-  critical context that downstream logic, analytics, and UI all depend on. List every field,
-  its type, its possible values, and its default.
-- **Data models & types** — fields, types, nullability, defaults, relationships, enums, constants
-- **Business logic** — state machines, calculations, validations, conditional branches, error
-  handling, side effects. Capture as **pseudocode**, not source-language code.
-- **UI behaviour** — screen purpose, conceptual layout structure (described in natural language),
-  what state drives what UI, user interactions and where they sit on screen, navigation
-  entry/exit points, animations
-- **Network contracts** — endpoints, methods, request/response shapes, auth, error/retry strategy
-- **Persistence** — entities, queries, caching strategy, migrations
-- **Analytics** — event names, parameters and how they're computed, screen tracking, enrichment
-- **External dependencies** — third-party libraries, system APIs (camera, GPS, audio, etc.)
+### Precision rules
 
-For each element, capture:
-- The WHAT (platform-agnostic behaviour)
-- The WHY (business reason from planning docs)
-- Source file reference (so the reader can verify)
+The agent has NO source code access. Every ambiguity = blocker.
 
-**Precision rules — the agent reading this document has no access to the source code, so
-every ambiguity becomes a blocker:**
+- **Enumerate all possible values.** Not "status string" → list "playing", "paused", "idle"
+- **Specify units.** ms vs s vs min. px vs pt. Always explicit.
+- **Define computed values.** "visited stops ratio" → exact formula + what counts as "visited"
+- **Clarify shared event names.** Same event name + different param? Call it out.
+- **Flag intentional inversions.** `speakerStatus="off"` when `muteAllAudio="on"`? Explicit.
+- **Map UI controls to values.** 3-segment picker Softer/Normal/Louder → 0.5/1.0/1.5
+- **Document firing order.** State updated before analytics fires? State as ordering constraint.
+- **Resolve naming mismatches.** `logVirtualTourClick` fires `inTourListStopsCta_click`? Clarify.
+- **Specify lifecycle timing.** Screen view fires on create? resume? once per session?
 
-- **Enumerate all possible values.** If a field can be "playing", "paused", or "idle" — list
-  all three. Don't say "status string" and leave the agent guessing.
-- **Specify units.** Milliseconds vs seconds vs minutes. Pixels vs points. Always explicit.
-- **Define computed values.** If a value like "visited stops ratio" is computed, explain the
-  exact computation and what counts as "visited" (arrival event? proximity? manual action?).
-- **Clarify shared event names.** If multiple distinct actions share the same event name
-  (disambiguated by a parameter), call this out explicitly so the agent understands the
-  dispatch pattern.
-- **Flag intentional inversions.** If two fields represent the same concept with inverted
-  semantics (e.g., `speakerStatus = "off"` when `muteAllAudio = "on"`), call this out
-  explicitly so the agent doesn't "fix" what looks like a bug.
-- **Map discrete UI controls to parameter values.** If a UI control (e.g., a 3-segment
-  volume picker: Softer/Normal/Louder) maps to a numeric parameter, document the exact
-  mapping (e.g., Softer=0.5, Normal=1.0, Louder=1.5). Don't leave the agent guessing.
-- **Document event firing order when it matters.** If state must be updated before analytics
-  fires (so the metadata snapshot reflects the new state), state this as an ordering
-  constraint in the business logic, not buried in a test case.
-- **Resolve naming mismatches.** If a function name doesn't match the component/action it
-  fires (e.g., `logVirtualTourClick` fires `inTourListSTopsCta_click`), clarify what the
-  function actually does vs what the event name suggests.
-- **Specify lifecycle timing.** For screen view events, state exactly when they fire
-  (on screen create, on resume, once per session, etc.).
-</step>
+## 5. Consolidate requirements
 
-<step name="reverse_engineer_requirements">
-**5. Consolidate requirements**
-
-Merge requirements from two sources — planning docs and actual code:
+Merge from two sources:
 
 **From planning artifacts:**
-- Requirements IDs from REQUIREMENTS.md
-- Success criteria from VERIFICATION.md (these become acceptance criteria)
+- Requirement IDs from REQUIREMENTS.md
+- Success criteria from VERIFICATION.md → acceptance criteria
 - UAT scenarios
 
 **From code analysis:**
-- Any behaviours implemented in code but not documented in planning artifacts
-- Edge cases found in tests but not in planning docs
+- Behaviours in code but not in planning docs
+- Edge cases from tests not in planning docs
 
-**Output format** — each requirement gets:
-- ID: `PORT-{NN}` (sequential)
-- Description of what the feature must do
-- Acceptance criteria (observable, testable statements)
+**Output:** Each requirement gets:
+- ID: `PORT-{NN}`
+- Description + acceptance criteria (observable, testable)
 - Source evidence (planning artifact + file/function)
 
-**Non-functional requirements** — performance constraints, accessibility needs, offline
-behaviour, concurrency expectations, error recovery.
+Plus non-functional requirements + edge cases.
 
-**Edge cases** — empty states, error states, boundary conditions. Planning UAT docs and
-existing tests are both valuable sources here.
-</step>
+## 6. Generate porting document
 
-<step name="generate_porting_document">
-**6. Generate the porting document**
+Fill template below. **Omit empty sections entirely.**
 
-Fill in the template below. **Only include sections that are relevant** to the feature being
-ported. If a section would be empty, omit it entirely.
-
-Key principles:
-- **Platform-agnostic by default.** Describe WHAT and HOW IT BEHAVES, not how to implement it.
-- **NEVER include target-platform implementation guidance.** No architecture recommendations,
-  no technology mapping tables, no suggested file structures, no framework-specific advice.
-  The destination project has its own architecture that this document knows nothing about.
-  The agent will decide how to implement — this document tells them what to implement.
-- **Business logic in pseudocode.** Never copy source-language code into the spec body.
-  Translate all logic into clear, language-neutral pseudocode.
-- **UI as behaviour, not layout code.** Describe the screen in natural language: where buttons
-  are, what the user sees in each state, what interactions are available and where they sit
-  spatially. An agent wiring analytics needs to know "the recenter button is on the map
-  overlay toolbar" — not just that a recenter click event exists.
-- **Source-platform notes are supplementary.** Brief annotations about source implementation
-  (e.g., "uses ExoPlayer with audio ducking via AudioFocus") help the reader research
-  equivalents, but they're not prescriptions.
-- **State model is mandatory.** The feature's state shape must be fully documented. Analytics,
-  UI, and business logic all read from state — without the state model definition, the agent
-  can't understand how the pieces connect.
-- **Every value must be explicit.** If a parameter can be "on" or "off", say so. If a duration
-  is in milliseconds, say so. If "visited" means "user arrived within GPS radius", say so.
-  The agent has no source code to check — ambiguity means guessing.
-- **Preserve decisions from planning docs.** Include key architectural decisions and their
-  rationale from SUMMARY.md — these explain WHY, which helps the target team make equivalent
-  choices.
-
----
+### Core principles
+- **Platform-agnostic.** WHAT + HOW IT BEHAVES, not how to implement
+- **NEVER target-platform guidance.** No arch recommendations, no tech mapping, no file structures, no framework advice
+- **Business logic in pseudocode.** Never copy source-language code
+- **UI as behaviour.** Spatial descriptions — where buttons are, what user sees per state
+- **Source-platform notes = supplementary.** Brief annotations to help research equivalents
+- **State model is mandatory.** Analytics/UI/logic all read from state
+- **Every value explicit.** Params, units, definitions — no ambiguity
+- **Preserve decisions from planning docs.** Key decisions + rationale from SUMMARY.md — explains WHY
 
 ### Output Template
 
@@ -269,379 +146,196 @@ Key principles:
 ---
 
 ## Summary
-
-{2-3 paragraphs describing what this feature does from a user's perspective. Walk through the
-end-to-end user experience: how the user enters the feature, what they see, what they can do,
-and how they leave. Someone reading only this section should be able to picture the feature
-in their head — screens, interactions, and purpose. Don't just name the feature; describe the
-experience.}
+{2-3 paragraphs: end-to-end user experience. How user enters, what they see/do, how they leave.}
 
 ---
 
 ## Source Files Analysed
-
-{Complete list of source files grouped by architectural layer. For traceability — so the
-destination team can refer back to the original code if needed.}
-
-### Presentation
-- `{file}` — {one-line purpose}
-
-### Domain / Business Logic
-- `{file}` — {one-line purpose}
-
-### Data
-- `{file}` — {one-line purpose}
-
-### Wiring / DI
-- `{file}` — {one-line purpose}
-
-### Tests
-- `{file}` — {one-line purpose}
+{Files grouped by layer: Presentation / Domain / Data / Wiring / Tests}
+- `{file}` — {purpose}
 
 ---
 
 ## Requirements
 
-### Functional Requirements
+### Functional
+**PORT-01: {Title}**
+- Description: {what}
+- Acceptance Criteria: {testable statements}
+- Source: `{file}:{function}` | `{planning artifact}`
 
-{The "contract" — the destination implementation must satisfy all of these.}
-
-**PORT-01: {Short title}**
-- Description: {What the feature must do}
-- Acceptance Criteria:
-  - {Observable, testable statement}
-- Source Evidence: `{file}:{function/class}` | `{planning artifact}`
-
-**PORT-02: {Short title}**
-...
-
-### Non-Functional Requirements
-
-{Only include categories that apply.}
-
-- **Performance:** {Timeouts, lazy loading, caching expectations}
-- **Accessibility:** {Content descriptions, focus order, dynamic type support}
-- **Offline Behaviour:** {What works offline, what degrades, what fails}
-- **Error Recovery:** {Retry policies, fallback states, graceful degradation}
+### Non-Functional
+- **Performance:** {if applicable}
+- **Accessibility:** {if applicable}
+- **Offline:** {if applicable}
+- **Error Recovery:** {if applicable}
 
 ### Edge Cases
-
-| Edge Case | Expected Behaviour | Source Evidence |
+| Edge Case | Expected Behaviour | Source |
 |---|---|---|
-| {condition} | {what should happen} | `{file}:{location}` or `{UAT scenario}` |
 
 ---
 
 ## Business Logic
 
-{The heart of the document. Every behaviour described in platform-agnostic pseudocode.}
-
 ### {Behaviour Name}
-
-**Trigger:** {What causes this — user action, timer, lifecycle event, etc.}
-**Input:** {What data is needed}
-
-**Logic:**
+**Trigger:** {cause}
+**Input:** {data needed}
 ```pseudocode
-{Step-by-step logic in plain pseudocode. Include branching, error handling, side effects.}
+{logic}
 ```
-
-**Output:** {Result — state change, UI update, analytics event, etc.}
-**Edge Cases:** {Boundary conditions specific to this behaviour}
+**Output:** {result}
+**Edge Cases:** {boundaries}
 
 ### State Machine
-
-{Include only if the feature has meaningful state transitions.}
-
 | From | Event | To | Side Effects |
 |---|---|---|---|
-| {state} | {event} | {state} | {what happens} |
 
 ---
 
 ## State Model
-
-{The feature's state shape. This is the connective tissue — business logic writes it, UI reads
-it, analytics snapshot it. Without this, the agent can't understand how pieces connect.}
-
-### {State Object Name}
+### {State Object}
 | Field | Type | Possible Values | Default | Description |
 |---|---|---|---|---|
-| {name} | {type} | {enumerate ALL values, or "any {type}"} | {default} | {what it represents} |
-
-{If state is composed of sub-objects, document each one the same way. If a field is a reference
-to another model, note that and define the referenced model in Data Models below.}
 
 ---
 
 ## Data Models
-
-{Platform-agnostic model definitions with pseudocode types. These are the data structures the
-feature operates on — API responses, database entities, domain objects.}
-
 ### {Model Name}
 | Field | Type | Required | Default | Notes |
 |---|---|---|---|---|
-| {name} | {type} | {yes/no} | {default or —} | {description, including units if numeric} |
-
-**Relationships:** {How this model relates to others}
 
 ---
 
 ## Analytics
 
-{Include only if the feature fires analytics events.}
-
 ### Event Naming Convention
-{Explain how event names are constructed — e.g., "{component}_{action}" — so the agent
-understands the pattern, not just the list.}
-
-{If multiple distinct actions share the same event name (disambiguated by a parameter), call
-this out explicitly: "Events X, Y, Z all fire as `sameEventName` — distinguished by the
-`action` parameter value."}
+{Pattern + shared-name disambiguation}
 
 ### Shared Metadata
-{If events share a common metadata payload, define it once here with every field, its type,
-its possible values, its computation logic, and its units. Don't just list field names — the
-agent needs to know HOW to compute each value from the state model above.}
+{Common payload: field, type, values, computation, units}
 
 ### Events Table
-
-| # | Event Name | Trigger | Extra Params (beyond shared metadata) | Notes |
+| # | Event Name | Trigger | Extra Params | Notes |
 |---|---|---|---|---|
-| {n} | {name} | {when fired} | {param: type (possible values) — description} | {disambiguation notes if event name is shared} |
 
 ### Parameter Keys
-{Exact string keys to use in the analytics payload — the agent must use these verbatim.}
-
 | Constant | String Value |
 |---|---|
-| {KEY_NAME} | {`"exact_string"`} |
 
 ---
 
 ## API / Network Contracts
-
-{Include only if the feature makes network calls.}
-
-### {Endpoint Name}
-- **Method:** {GET/POST/PUT/DELETE}
-- **Path:** {URL path}
-- **Authentication:** {What auth is required}
-- **Request:** {body model in pseudocode, if applicable}
-- **Response:** {body model in pseudocode}
-- **Error Handling:** {What happens on 4xx, 5xx, timeout, no network}
+### {Endpoint}
+- Method / Path / Auth / Request / Response / Error Handling
 
 ---
 
 ## Persistence
-
-{Include only if the feature uses local storage or caching.}
-
-### {Entity / Store Name}
-**Purpose:** {What data is persisted and why}
-
-| Field | Type | Notes |
-|---|---|---|
-| {name} | {type} | {indexed? constraints?} |
-
-**Operations:** {CRUD operations in plain language}
-**Caching Strategy:** {TTL, invalidation triggers, offline-first behaviour}
+### {Entity}
+- Purpose / Fields / Operations / Caching Strategy
 
 ---
 
 ## UI Specification
-
-{Describe what the user sees and does — product spec, not implementation guide. This section
-is essential even for features like analytics, because the agent needs to know WHERE each
-interaction happens on screen to wire events correctly.}
-
 ### Screen: {Name}
-
-**Purpose:** {What the user accomplishes here}
-
-**Layout (conceptual):**
-{Describe the visual structure in natural language, with spatial relationships. Where are the
-controls? What's the visual hierarchy? Example: "A full-screen map with a bottom sheet. The
-bottom sheet header shows current stop name and a play/pause button. The map overlay has a
-toolbar in the top-right with recenter and overview buttons. A speaker button sits in the
-top-left corner." — enough detail that the agent knows where every interactive element lives.}
-
-**Visual States:**
-- **Loading:** {What the user sees while data loads}
-- **Content:** {The normal/populated state}
-- **Empty:** {What shows when there's no data}
-- **Error:** {What shows when something fails}
-
-**User Interactions:**
+**Purpose:** {goal}
+**Layout:** {spatial description in natural language}
+**Visual States:** Loading / Content / Empty / Error
+**Interactions:**
 | Element | Location | Interaction | Behaviour |
 |---|---|---|---|
-| {button/control name} | {where on screen} | {tap/swipe/etc.} | {what happens, including analytics event if any} |
-
-**Navigation:**
-- **Entry:** {How the user gets here}
-- **Exit:** {Where the user can go from here}
+**Navigation:** Entry / Exit
 
 ### Sheets / Dialogs
-{Include any bottom sheets, modals, or overlays the feature uses. Same format as screens
-but note what triggers them and how they're dismissed.}
+{Trigger, content, dismiss}
 
 ---
 
 ## Test Cases
-
-### Unit / Logic Tests
-
-**{Test Name}**
-- **Given:** {Precondition}
-- **When:** {Action}
-- **Then:** {Expected outcome}
+### Unit Tests
+- **Given:** / **When:** / **Then:**
 
 ### Manual Test Plan
-
-| # | Scenario | Steps | Expected Result |
+| # | Scenario | Steps | Expected |
 |---|---|---|---|
-| 1 | {name} | {steps} | {expected} |
 
 ---
 
 ## External Dependencies
-
-{Libraries and system APIs the feature relies on, so the destination team can find equivalents.}
-
 | Dependency | Purpose | Category |
 |---|---|---|
-| {library or system API} | {what it's used for} | {networking/media/maps/analytics/etc.} |
-
-**Source-platform notes:** {Brief notes on how these are used in the source to help research equivalents.}
 
 ---
 
 ## Key Decisions from Source
-
-{Decisions and their rationale from SUMMARY.md, so the target team understands WHY certain
-approaches were chosen. These inform — but don't prescribe — the target implementation.}
-
 | Decision | Rationale | Planning Reference |
 |---|---|---|
-| {what was decided} | {why} | `{SUMMARY.md or PLAN.md reference}` |
 
 ---
 
 ## Migration Checklist
-
-{Auto-generate from sections above. Only include items for sections that exist in this document.}
-
-- [ ] State model defined
-- [ ] Data models created
-- [ ] Business logic implemented (all PORT-xx requirements)
-- [ ] UI screens built (all states: loading, content, empty, error)
-- [ ] Analytics events wired
-- [ ] API integration connected
-- [ ] Persistence layer set up
-- [ ] Accessibility verified
-- [ ] Offline behaviour tested
-- [ ] Unit tests written
-- [ ] Manual test plan executed
-- [ ] Edge cases verified
+{Auto-generate from sections present in this document.}
 
 ---
 
 ## Appendix: Source Code Reference
-
-{Short, representative source snippets (10-30 lines each) that clarify intent when pseudocode
-alone might be ambiguous. Keep focused and brief.}
-
-### {Snippet Title}
-**File:** `{path}`
-**Why included:** {What this snippet clarifies}
-```{language}
-{code}
-```
+{Short snippets (10-30 lines) that clarify ambiguous pseudocode.}
 ```
 
----
-</step>
+## 7. Write output
 
-<step name="write_output">
-**7. Write the porting document**
+- `--output` flag → use that path
+- Default: `.planning/ports/{feature-slug}-port-gsd-feature.md`
+- Create `.planning/ports/` if needed
 
-Output path:
-- If `--output` provided, use that
-- Otherwise: `.planning/ports/{feature-slug}-port-gsd-feature.md`
-
-Create `.planning/ports/` directory if it doesn't exist.
-</step>
-
-<step name="completion">
-**8. Present completion summary**
+## 8. Completion summary
 
 ```
 Port document generated:
-  Feature:      "{feature name}" (from {GSD artifact type})
-  Source:        {source platform} ({N} files analysed)
-  Document:     {output path}
-  Requirements:  {count} functional, {count} non-functional
-  Test cases:    {count}
-  Analytics:     {count} events (or "none")
+  Feature:      "{name}" (from {GSD artifact type})
+  Source:        {platform} ({N} files)
+  Document:     {path}
+  Requirements:  {N} functional, {N} non-functional
+  Test cases:    {N}
+  Analytics:     {N} events
 
 Next steps:
-  Hand this document to a developer or AI coding agent on the destination
-  platform. It contains everything needed to implement the feature without
-  reading the original source code.
-
   With GSD: /gsd:new-milestone → provide this document as requirements
   Without:  Provide to any AI agent or developer as a spec
 ```
-</step>
 
-</process>
-
-<guidelines>
+# Guidelines
 
 ## Discovery (GSD-specific)
-- **Read ALL planning artifacts** — don't skip summaries, verifications, or UAT docs.
-- **Read actual source code too** — plans describe intent, code shows reality. Prefer code
-  truth over plan descriptions when they diverge.
-- **Cross-reference decisions.** SUMMARY.md often explains WHY things were built a certain
-  way — preserve these rationales for the target team.
+- Read ALL planning artifacts — don't skip summaries, verifications, UAT
+- Read actual source code too — plans = intent, code = reality. Prefer code when they diverge.
+- Cross-reference decisions from SUMMARY.md — preserve rationales
 
 ## Analysis
-- Read the actual code, don't just grep for function names.
-- Follow data flow end-to-end: UI → state management → business logic → data layer → API/DB
-  and back.
-- **Extract the full state model.** Analytics, UI, and business logic all read from state.
-  If you don't document the state shape, the agent can't understand how the pieces connect.
-- **Enumerate every possible value.** Don't write "status: String" — write
-  "status: String — one of 'playing', 'paused', 'idle'". The agent has no source to check.
-- **Specify every unit.** Milliseconds, seconds, minutes, pixels, points. Always explicit.
-- **Define every computation.** If a value is derived (like "visited stops ratio"), explain
-  exactly how it's computed and what triggers each state (e.g., "a stop counts as visited
-  when the arrival event fires, not on proximity alone").
-- Capture error handling — how the feature fails gracefully is as important as the happy path.
-- Note concurrency patterns (async/threading) — these often differ significantly between
-  platforms and are easy to miss.
+- Read actual code, don't just grep names
+- Follow data flow end-to-end: UI → state → logic → data → API/DB → back
+- Extract full state model — without it, pieces don't connect
+- Enumerate every value, specify every unit, define every computation
+- Capture error handling — graceful failure matters
+- Note concurrency patterns — they differ across platforms
 
-## Output Quality — The "Blind Agent" Test
-The document is ready when an AI coding agent with **zero access to the source codebase** can:
-1. Understand exactly what the feature does and what the user experiences
-2. Know the full state shape the feature manages
-3. Implement every behaviour from pseudocode alone, with no ambiguous values or units
-4. Build every screen knowing where each interactive element sits spatially
-5. Wire up all analytics events with exact parameter keys and values
-6. Write tests for every behaviour and edge case
-7. Choose their own architecture — because the document describes WHAT, not HOW
+## Quality — "Blind Agent" Test
 
-If the agent would need to ask "what are the possible values of X?" or "where is this button
-on screen?" or "what unit is this duration in?" — the document is not done yet.
+Document is ready when an agent with **zero source access** can:
+1. Understand the full user experience
+2. Know the complete state shape
+3. Implement every behaviour from pseudocode (no ambiguous values/units)
+4. Build every screen with spatial element positions
+5. Wire all analytics with exact keys and values
+6. Write tests for all behaviours and edge cases
+7. Choose their own architecture — doc describes WHAT, not HOW
 
-## What to NEVER include
-- No target-platform architecture recommendations
-- No technology mapping tables (Android tech → iOS tech)
-- No suggested file structures for the target
-- No framework-specific advice (no "use @Observable" or "use Combine")
-- No DI framework recommendations
+If agent would ask "what are the possible values?" / "where is this button?" / "what unit?" → not done.
 
-These belong to the destination project, not this document.
-
-</guidelines>
+## NEVER include
+- Target-platform architecture recommendations
+- Technology mapping tables
+- Suggested file structures for target
+- Framework-specific advice
+- DI framework recommendations
