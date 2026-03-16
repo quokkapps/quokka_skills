@@ -6,14 +6,14 @@
   },
   "plugins": [
     {
-      "name": "quokka-port-commands",
-      "description": "Cross-platform feature porting commands (Android/iOS). Scan source code or GSD artifacts to generate comprehensive porting documents.",
+      "name": "quokka-ai",
+      "description": "Quokkapps team AI commands for cross-platform development.",
       "version": "1.0.0",
       "author": {
         "name": "Quokkapps",
         "email": "dev@quokkapps.com"
       },
-      "source": "./plugins/quokka-port-commands",
+      "source": "./plugins/quokka-ai",
       "category": "development"
     }
   ]

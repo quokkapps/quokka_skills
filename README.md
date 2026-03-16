@@ -18,7 +18,7 @@ claude plugin marketplace add quokkapps/quokka_skills
 
 **Step 2: Install the plugin**
 ```bash
-claude plugin install quokka-port-commands
+claude plugin install quokka-ai
 ```
 
 Updates are pulled automatically when Claude Code refreshes marketplaces.
