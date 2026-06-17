@@ -91,7 +91,19 @@ if (fs.existsSync(versionFile)) {
   installedVersion = fs.readFileSync(versionFile, 'utf-8').trim();
 }
 
-if (installedVersion === pkg.version) {
+function commandsInstalled() {
+  if (!fs.existsSync(commandsDest)) return false;
+  const srcFiles = fs.readdirSync(commandsSrc).filter((f) => f.endsWith('.md'));
+  return srcFiles.every((f) => fs.existsSync(path.join(commandsDest, f)));
+}
+
+function skillsInstalled() {
+  return shippedSkillNames().every((name) =>
+    fs.existsSync(path.join(skillsDest, name, 'SKILL.md'))
+  );
+}
+
+if (installedVersion === pkg.version && commandsInstalled() && skillsInstalled()) {
   console.log(`${green}Already up to date.${reset} (v${pkg.version})\n`);
   process.exit(0);
 }

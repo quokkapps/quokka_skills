@@ -28,7 +28,7 @@ Run from any project directory where you want the commands available:
 npx --yes github:quokkapps/quokka_skills
 ```
 
-This copies commands into `.claude/commands/quokka/` in the nearest `.claude` directory.
+This copies commands into `.claude/commands/quokka/` and skills into `.claude/skills/` in the nearest `.claude` directory.
 
 ## Updating
 

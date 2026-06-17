@@ -35,4 +35,30 @@ assert.ok(!fs.existsSync(path.join(tmp, '.claude', 'commands', 'quokka')), 'comm
 assert.ok(!fs.existsSync(path.join(tmp, '.claude', 'skills', 'quokka-feature-test-design')), 'skill not removed on uninstall');
 
 fs.rmSync(tmp, { recursive: true, force: true });
+
+// ── Regression: installer self-repairs missing skill files ────────────────────
+// Set up a fresh temp project and do a clean install.
+const tmp2 = fs.mkdtempSync(path.join(os.tmpdir(), 'qst2-'));
+fs.mkdirSync(path.join(tmp2, '.claude'), { recursive: true });
+const installer = path.join(repoRoot, 'bin', 'install.js');
+
+execFileSync('node', [installer], { cwd: tmp2, stdio: 'pipe' });
+
+// 1. Confirm skill dir was installed.
+const skillDir = path.join(tmp2, '.claude', 'skills', 'quokka-feature-test-design');
+const skillMd = path.join(skillDir, 'SKILL.md');
+assert.ok(fs.existsSync(skillMd), 'expected SKILL.md to exist after first install');
+
+// 2. Delete the skill dir but leave the .version marker intact.
+fs.rmSync(skillDir, { recursive: true, force: true });
+assert.ok(!fs.existsSync(skillDir), 'skill dir should be gone before re-install');
+
+// 3. Run installer again (version still matches).
+execFileSync('node', [installer], { cwd: tmp2, stdio: 'pipe' });
+
+// 4. Assert SKILL.md is restored.
+assert.ok(fs.existsSync(skillMd), 'expected SKILL.md to be restored after self-repair re-install');
+
+fs.rmSync(tmp2, { recursive: true, force: true });
+
 console.log('install.test.js PASSED');
