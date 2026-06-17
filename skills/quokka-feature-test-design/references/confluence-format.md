@@ -1,4 +1,4 @@
-# Confluence Output (Phase 5, optional)
+# Confluence Output (optional)
 
 Only run if the dev opts in. The local `docs/test-plans/<slug>.md` is always the source of truth.
 
@@ -10,7 +10,7 @@ If ToolSearch returns nothing (MCP not connected), tell the dev Confluence sync 
 ## Procedure
 1. `getAccessibleAtlassianResources` → cloudId.
 2. If an epic key was given, `getJiraIssue` to read its title and find/confirm the target space; otherwise ask the dev for the space key (default: the team test-plans space).
-3. Build the page body from the test-plan markdown: title `Test Plan: <Feature>`, the summary, the scorecard, the 12-column table, and the skipped appendix. Convert the markdown table to a Confluence table (Storage/ADF as the MCP expects).
+3. Build the page body from the test-plan markdown: title `Test Plan: <Feature>`, the summary, the interview checklist, the **MUST-TEST 20%** table, the Extended table, and the skipped list. Convert each markdown table to a Confluence table (Storage/ADF as the MCP expects); keep the Must-Test section visually first and distinct.
 4. `createConfluencePage` (or update if a page with that title exists under the parent) with the epic page or space as parent. Link back to the epic.
 5. Return the page URL to the dev.
 

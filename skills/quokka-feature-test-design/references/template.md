@@ -1,24 +1,34 @@
-# Output Template (Phase 4)
+# Output template
 
-The document has a HEADER, then the test-case TABLE, then the SKIPPED appendix.
+A HEADER, then TWO clearly separated sections: the Must-Test 20% first, then Extended coverage.
 
 ## Header
 - Feature summary (2–3 sentences) + links (epic key, design).
-- Stack detected.
-- Dimension scorecard: each of the 9 marked Resolved / Waived(reason).
-- 80/20 rationale paragraph (why the kept cases are load-bearing).
+- Stack(s): Android / iOS / KMP.
+- Interview checklist: each of the 9 items marked Resolved / Waived(reason).
+- **One line: why these are the must-test 20%.**
 
-## Test-case table — 12 columns, in this exact order
-`TC ID | Priority | Risk | Feature | Test Area | Test Type | Title | Preconditions | Test Steps | Expected Result | Expected Integration | Result`
+## Section 1 — ▶ MUST-TEST 20% (dev executes these)
+The load-bearing cases. Columns, in order:
 
-Authoring rules (mirror the Care Plan Tasks sample):
-- **TC ID**: `TC#1`, `TC#2`, … sequential.
-- **Priority**: P1/P2/P3 from risk-scoring. **Risk**: High/Med/Low.
-- **Test Area**: breadcrumb, e.g. `Home screen > Single Schedule > Due now`.
+`TC ID | Risk | Test Area | Coverage | Title | Preconditions | Test Steps | Expected Result | Expected Integration | Done?`
+
+- **Risk**: High/Med/Low (from `likelihood × impact × cost-of-failure`).
+- **Test Area**: breadcrumb, e.g. `Home > Welfare Check > Due now`.
+- **Coverage**: how the dev covers it — `manual` and/or `unit` / `ui` / `e2e` (see automation-tiers.md). KMP shared logic → `commonTest`.
 - **Test Steps**: numbered list.
-- **Expected Result**: group assertions as `Verify after step #N:` bullet lists.
-- **Expected Integration**: layered sub-headings — `CP Desktop:`, `Notification:`, `Backend/API:` — each a bullet list of checks (API routes/records, notifications fired/suppressed). Layer UI → integration → backend/API → notification.
-- **Result**: leave blank (filled during execution).
+- **Expected Result**: group as `Verify after step #N:` bullet lists.
+- **Expected Integration**: layered bullets — `App UI:`, `Backend/API:`, `Notification:` — what fires / is suppressed (routes, records, pushes).
+- **Done?**: `☐` checkbox the dev ticks after executing.
 
-## Skipped appendix
-Render the "Consciously skipped (why)" table from risk-scoring.md after the main table.
+## Section 2 — Extended coverage (automate / skip)
+Everything not in the 20%. Same columns minus Done?, plus an outcome:
+
+`TC ID | Risk | Test Area | Coverage | Title | Expected Result | Outcome`
+
+- **Outcome**: `automate` (with tier) or `skip`.
+
+### Consciously skipped (why)
+| Skipped case | Why skipped |
+|---|---|
+| <case> | <risk too low / redundant with TC#N / out of scope> |
