@@ -39,7 +39,7 @@ List every use case from the code, then score each `likelihood × impact × cost
 - `impact`/`cost` = 3 only for real harm: lockout, data loss, money, safety, or a silent wrong result. A rule that merely blocks submit, a cosmetic glitch, or a rare-device case is Med/Low.
 - Collapse *variations* of one rule into ONE Must-Test case; the other variants are Extended/automated (e.g. empty vs short vs bad-format password = one must-test + the rest automated unit cases).
 
-- **Must-Test (the 20%)** = the load-bearing minority: the happy path, each distinct user-visible failure branch (not trivial variants), the risky race/timing paths, and every stated acceptance criterion. **Risk wins over the quota** (never drop a high-risk case to hit 20%, never pad). If the set exceeds ~30% of all cases, re-score — you're over-rating impact.
+- **Must-Test (the 20%)** = the load-bearing minority: the happy path, each distinct user-visible failure branch (not trivial variants), the risky race/timing paths, and every stated acceptance criterion. **Risk wins over the quota** (never drop a high-risk case to hit 20%, never pad). If the set exceeds ~30% of all cases, re-score — you're usually over-rating impact or keeping variants; if re-scoring confirms they're genuinely distinct user-visible branches, say so in the "why these are the must-test" line and proceed.
 - **Extended** = the rest: automate where cheap, otherwise **consciously skip** with a one-line reason.
 
 Tag each Must-Test case with how the dev covers it: `manual` (dev runs it) and/or an automated tier — see `references/automation-tiers.md` (Android / iOS / KMP).
