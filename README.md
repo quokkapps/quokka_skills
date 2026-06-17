@@ -8,7 +8,17 @@ Shared Claude Code commands for the Quokkapps team. Generates platform-agnostic 
 |---------|-------------|
 | `/quokka:port-feature` | Scan source code by feature description and generate a platform-agnostic porting document. For features NOT built with GSD. |
 | `/quokka:port-gsd-feature` | Analyze a completed GSD feature (phase, milestone, quick task) and generate a platform-agnostic porting document. For features built with GSD. |
+| `/quokka:feature-test-design` | Before building a mobile native / KMP feature (Android/iOS): interview the dev, research the live code, and generate a test plan that clearly marks the must-test 20%. |
 | `/quokka:update` | Update commands to the latest version from GitHub. |
+
+## Skills
+
+| Skill | Description |
+|-------|-------------|
+| `quokka-feature-test-design` | The engine behind `/quokka:feature-test-design`. For Android / iOS / KMP repos: a 9-item interview, code-grounded use-case discovery, and a two-tier plan that calls out the must-test 20% the dev executes. Writes to `docs/test-plans/` (+ optional Confluence). |
+
+Skills install into `.claude/skills/` via the same installer. Run `/quokka:feature-test-design`
+to use it, or invoke the skill directly.
 
 ## Installation
 
@@ -18,7 +28,7 @@ Run from any project directory where you want the commands available:
 npx --yes github:quokkapps/quokka_skills
 ```
 
-This copies commands into `.claude/commands/quokka/` in the nearest `.claude` directory.
+This copies commands into `.claude/commands/quokka/` and skills into `.claude/skills/` in the nearest `.claude` directory.
 
 ## Updating
 
