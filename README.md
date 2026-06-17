@@ -8,7 +8,17 @@ Shared Claude Code commands for the Quokkapps team. Generates platform-agnostic 
 |---------|-------------|
 | `/quokka:port-feature` | Scan source code by feature description and generate a platform-agnostic porting document. For features NOT built with GSD. |
 | `/quokka:port-gsd-feature` | Analyze a completed GSD feature (phase, milestone, quick task) and generate a platform-agnostic porting document. For features built with GSD. |
+| `/quokka:feature-test-design` | Interview to ~95% confidence, research the live codebase, then generate a risk-prioritized, automation-tagged test plan (12-column template) before building a feature. |
 | `/quokka:update` | Update commands to the latest version from GitHub. |
+
+## Skills
+
+| Skill | Description |
+|-------|-------------|
+| `quokka-feature-test-design` | The engine behind `/quokka:feature-test-design`. Runs a 9-dimension interview gate, code-grounded research, risk-scored 80/20 prioritization, and writes the test plan to `docs/test-plans/` (+ optional Confluence). |
+
+Skills install into `.claude/skills/` via the same installer. Run `/quokka:feature-test-design`
+to use it, or invoke the skill directly.
 
 ## Installation
 
