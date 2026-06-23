@@ -47,7 +47,7 @@ Tag each Must-Test case with how the dev covers it: `manual` (dev runs it) and/o
 ## 4. Write the plan
 Use `references/template.md` (start from `assets/test-plan-template.md`). Two clearly separated sections:
 
-- **▶ MUST-TEST 20% — execute these** (P0 table, with a Done? checkbox per row)
+- **▶ MUST-TEST 20% — execute these** (P0 table; each row ends in a `Done (Dev / QA)` cell — two checkboxes, `Dev ☐` and `QA ☐`)
 - **Extended coverage** (automate / skip table) + a short "consciously skipped (why)" list.
 
 Write to `docs/test-plans/<feature-slug>.md` (create the dir if needed). Optionally sync to Confluence — read `references/confluence-format.md`; the local `.md` is the source of truth.
