@@ -25,9 +25,11 @@
 ---
 
 ## ▶ MUST-TEST 20% — execute these
-| TC ID | Risk | Test Area | Coverage | Title | Preconditions | Test Steps | Expected Result | Expected Integration | Done? |
+| TC ID | Risk | Test Area | Coverage | Title | Preconditions | Test Steps | Expected Result | Expected Integration | Done (Dev / QA) |
 |---|---|---|---|---|---|---|---|---|---|
-| TC#1 | High | <area> | manual + ui | <title> | <preconditions> | 1. … 2. … | Verify after step #N: … | App UI: … / Backend/API: … / Notification: … | ☐ |
+| TC#1 | High | <area> | manual + ui | <title> | <preconditions> | 1. … 2. … | Verify after step #N: … | App UI: … / Backend/API: … / Notification: … | Dev ☐ / QA ☐ |
+
+> When publishing to Confluence (see `references/confluence-format.md`): render Test Steps / Expected Result / Expected Integration as real list nodes, and make the Done cell two interactive task checkboxes (Dev, QA) — not plain `☐` glyphs.
 
 ---
 
