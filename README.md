@@ -20,6 +20,21 @@ Shared Claude Code commands for the Quokkapps team. Generates platform-agnostic 
 Skills install into `.claude/skills/` via the same installer. Run `/quokka:feature-test-design`
 to use it, or invoke the skill directly.
 
+## Hooks
+
+| Hook | Description |
+|------|-------------|
+| `SessionEnd` knowledge base | When a Claude Code session ends, a background job judges whether the work was worth recording. If so, it writes an HTML summary (overview, **key decisions + rationale**, core ideas, outputs/artifacts) to `knowledge-base/<date>_<title>.html`. Trivial sessions are skipped. |
+
+How it works:
+
+- Two scripts install into `.claude/hooks/`: `quokka-knowledge-summary.sh` (dispatcher — detaches the work so it never blocks the session closing) and `quokka-knowledge-worker.sh` (extracts the transcript, asks a headless `claude -p` to judge + summarize, writes the file).
+- The installer idempotently registers the `SessionEnd` hook in `.claude/settings.json` (existing settings and hooks are preserved).
+- A cheap pre-filter skips short/trivial sessions before spending any tokens; the rest are judged by the model, which writes nothing for sessions with no meaningful decisions.
+- Requires `jq` and the `claude` CLI on PATH. A recursion guard (`CLAUDE_KB_SUMMARY_GUARD`) prevents the summary's own `claude` call from re-triggering the hook.
+
+> Note: `SessionEnd` hooks added mid-session may need a Claude Code restart (or opening `/hooks` once) to load.
+
 ## Installation
 
 Run from any project directory where you want the commands available:
@@ -28,7 +43,7 @@ Run from any project directory where you want the commands available:
 npx --yes github:quokkapps/quokka_skills
 ```
 
-This copies commands into `.claude/commands/quokka/` and skills into `.claude/skills/` in the nearest `.claude` directory.
+This copies commands into `.claude/commands/quokka/`, skills into `.claude/skills/`, and hook scripts into `.claude/hooks/` in the nearest `.claude` directory, and registers the `SessionEnd` knowledge-base hook in `.claude/settings.json`.
 
 ## Updating
 
@@ -75,5 +90,6 @@ Both commands output a platform-agnostic porting document to `.planning/ports/`.
 ## How it works
 
 - Commands are installed as standard Claude Code slash commands in `.claude/commands/quokka/`
+- Skills install into `.claude/skills/`; hook scripts into `.claude/hooks/` (with the `SessionEnd` hook registered in `.claude/settings.json`)
 - Versioning is controlled by git tags (e.g., `git tag v1.1.0 && git push --tags`)
-- The install script (`bin/install.js`) handles install, update, and uninstall
+- The install script (`bin/install.js`) handles install, update, and uninstall (uninstall also removes the hook scripts and the `SessionEnd` settings entry)
