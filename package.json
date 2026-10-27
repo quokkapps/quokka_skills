@@ -1,7 +1,7 @@
 {
   "name": "quokka-ai-cc",
   "version": "1.4.0",
-  "description": "Quokkapps AI commands for Claude Code — cross-platform feature porting (Android/iOS).",
+  "description": "Quokkapps AI commands for Claude Code: change-request flow (/quokka:cr) and mobile feature test design.",
   "bin": {
     "quokka-ai-cc": "bin/install.js"
   },
@@ -9,14 +9,12 @@
     "bin",
     "commands",
     "skills",
-    "hooks",
     "projects"
   ],
   "keywords": [
     "claude",
     "claude-code",
     "ai",
-    "porting",
     "android",
     "ios",
     "cross-platform"

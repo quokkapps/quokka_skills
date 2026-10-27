@@ -70,7 +70,6 @@ const commandsSrc = path.join(packageRoot, 'commands', 'quokka');
 const commandsDest = path.join(claudeDir, 'commands', 'quokka');
 const skillsSrc = path.join(packageRoot, 'skills');
 const skillsDest = path.join(claudeDir, 'skills');
-const hooksSrc = path.join(packageRoot, 'hooks');
 const hooksDest = path.join(claudeDir, 'hooks');
 const settingsPath = path.join(claudeDir, 'settings.json');
 
@@ -85,10 +84,11 @@ const projectsSrc = path.join(packageRoot, 'projects');
 const globalProjectsDest = path.join(globalRoot, '.quokka', 'cr', 'projects');
 const globalVersionFile = path.join(globalRoot, '.quokka', 'cr', '.version');
 
-// The SessionEnd knowledge-base hook. The dispatcher command is the stable
-// identity used for idempotent install/uninstall in settings.json.
-const KB_HOOK_SCRIPT = 'quokka-knowledge-summary.sh';
-const KB_HOOK_COMMAND = `bash "$CLAUDE_PROJECT_DIR/.claude/hooks/${KB_HOOK_SCRIPT}"`;
+// Items earlier versions installed per project and this one no longer ships.
+// Removed on install and uninstall so an update leaves nothing stale behind.
+const RETIRED_COMMANDS = ['port-feature.md', 'port-gsd-feature.md'];
+const RETIRED_HOOK_SCRIPTS = ['quokka-knowledge-summary.sh', 'quokka-knowledge-worker.sh'];
+const RETIRED_HOOK_MARKER = 'quokka-knowledge-summary.sh';
 
 // Names of the skill directories this package ships (used for clean uninstall).
 function shippedSkillNames() {
@@ -148,15 +148,6 @@ function uninstallGlobal() {
   return removed;
 }
 
-// Names of the hook scripts this package ships.
-function shippedHookScripts() {
-  if (!fs.existsSync(hooksSrc)) return [];
-  return fs
-    .readdirSync(hooksSrc, { withFileTypes: true })
-    .filter((e) => e.isFile() && e.name.endsWith('.sh'))
-    .map((e) => e.name);
-}
-
 function readSettings() {
   if (!fs.existsSync(settingsPath)) return { settings: {}, ok: true };
   try {
@@ -166,77 +157,43 @@ function readSettings() {
   }
 }
 
-function writeSettings(settings) {
-  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
-}
-
-function sessionEndHasKbHook(settings) {
-  const list = settings && settings.hooks && settings.hooks.SessionEnd;
-  if (!Array.isArray(list)) return false;
-  return JSON.stringify(list).includes(KB_HOOK_SCRIPT);
-}
-
-// ── Install ───────────────────────────────────────────────────────────────
-
-function installHooks() {
-  const scripts = shippedHookScripts();
-  if (scripts.length === 0) return { installed: [], registered: false, warned: false };
-
-  copyDir(hooksSrc, hooksDest);
-  for (const name of scripts) {
-    fs.chmodSync(path.join(hooksDest, name), 0o755);
+// Removes retired commands, hook scripts and the old SessionEnd registration.
+// Other settings and hooks are left alone.
+function removeRetired() {
+  let removed = 0;
+  const targets = [
+    ...RETIRED_COMMANDS.map((f) => path.join(commandsDest, f)),
+    ...RETIRED_HOOK_SCRIPTS.map((f) => path.join(hooksDest, f)),
+  ];
+  for (const p of targets) {
+    if (removeDir(p)) removed++;
   }
-
-  // Register the SessionEnd hook in settings.json (idempotent, non-destructive).
   const { settings, ok } = readSettings();
-  if (!ok) {
-    return { installed: scripts, registered: false, warned: true };
-  }
-  let registered = false;
-  if (!sessionEndHasKbHook(settings)) {
-    settings.hooks = settings.hooks || {};
-    settings.hooks.SessionEnd = settings.hooks.SessionEnd || [];
-    settings.hooks.SessionEnd.push({
-      hooks: [
-        {
-          type: 'command',
-          command: KB_HOOK_COMMAND,
-          timeout: 15,
-          statusMessage: 'Recording session to knowledge base...',
-        },
-      ],
-    });
-    writeSettings(settings);
-    registered = true;
-  }
-  return { installed: scripts, registered, warned: false };
-}
-
-// ── Uninstall ───────────────────────────────────────────────────────────────
-
-function uninstallHooks() {
-  let removedScripts = 0;
-  for (const name of shippedHookScripts()) {
-    const p = path.join(hooksDest, name);
-    if (fs.existsSync(p)) {
-      fs.rmSync(p, { force: true });
-      removedScripts++;
+  const list = ok && settings && settings.hooks && settings.hooks.SessionEnd;
+  if (Array.isArray(list)) {
+    // Drop only our hook entries; a group goes only when nothing else is left in it.
+    const isRetired = (h) => JSON.stringify(h).includes(RETIRED_HOOK_MARKER);
+    const kept = list
+      .map((group) =>
+        Array.isArray(group.hooks) ? { ...group, hooks: group.hooks.filter((h) => !isRetired(h)) } : group
+      )
+      .filter((group) => !(Array.isArray(group.hooks) && group.hooks.length === 0));
+    if (JSON.stringify(kept) !== JSON.stringify(list)) {
+      if (kept.length) settings.hooks.SessionEnd = kept;
+      else delete settings.hooks.SessionEnd;
+      if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
+      removed++;
     }
   }
-  // Remove the SessionEnd registration we added.
+  return removed;
+}
+
+function retiredPresent() {
+  if (RETIRED_COMMANDS.some((f) => fs.existsSync(path.join(commandsDest, f)))) return true;
+  if (RETIRED_HOOK_SCRIPTS.some((f) => fs.existsSync(path.join(hooksDest, f)))) return true;
   const { settings, ok } = readSettings();
-  let unregistered = false;
-  if (ok && settings && settings.hooks && Array.isArray(settings.hooks.SessionEnd)) {
-    const before = settings.hooks.SessionEnd.length;
-    settings.hooks.SessionEnd = settings.hooks.SessionEnd.filter(
-      (group) => !JSON.stringify(group).includes(KB_HOOK_SCRIPT)
-    );
-    if (settings.hooks.SessionEnd.length !== before) unregistered = true;
-    if (settings.hooks.SessionEnd.length === 0) delete settings.hooks.SessionEnd;
-    if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
-    if (unregistered) writeSettings(settings);
-  }
-  return { removedScripts, unregistered };
+  return Boolean(ok && settings && settings.hooks && JSON.stringify(settings.hooks).includes(RETIRED_HOOK_MARKER));
 }
 
 if (hasUninstall) {
@@ -255,12 +212,8 @@ if (hasUninstall) {
   if (removedGlobal > 0) {
     console.log(`  ${green}✓${reset} Removed /quokka:cr global files (kept local projects)`);
   }
-  const { removedScripts, unregistered } = uninstallHooks();
-  if (removedScripts > 0) {
-    console.log(`  ${green}✓${reset} Removed ${removedScripts} hook script(s)`);
-  }
-  if (unregistered) {
-    console.log(`  ${green}✓${reset} Removed SessionEnd hook from settings.json`);
+  if (removeRetired() > 0) {
+    console.log(`  ${green}✓${reset} Removed retired port commands and session-summary hook`);
   }
   console.log(`\n${green}Uninstalled.${reset}\n`);
   process.exit(0);
@@ -287,21 +240,11 @@ function skillsInstalled() {
   );
 }
 
-function hooksInstalled() {
-  const scripts = shippedHookScripts();
-  if (scripts.length === 0) return true;
-  const filesPresent = scripts.every((name) => fs.existsSync(path.join(hooksDest, name)));
-  const { settings, ok } = readSettings();
-  // If settings can't be parsed we can't confirm registration — treat as not
-  // installed so the run re-attempts (and surfaces the warning).
-  return filesPresent && ok && sessionEndHasKbHook(settings);
-}
-
 if (
   installedVersion === pkg.version &&
   commandsInstalled() &&
   skillsInstalled() &&
-  hooksInstalled() &&
+  !retiredPresent() &&
   globalInstalled()
 ) {
   console.log(`${green}Already up to date.${reset} (v${pkg.version})\n`);
@@ -341,24 +284,13 @@ for (const f of GLOBAL_COMMANDS) console.log(`  ${green}✓${reset} global: ${pa
 for (const n of GLOBAL_SKILLS) console.log(`  ${green}✓${reset} global: ${path.join(globalSkillsDest, n)}/`);
 console.log(`  ${green}✓${reset} global: ${globalProjectsDest}/ (${projectFiles.join(', ')})`);
 
-// Install the SessionEnd knowledge-base hook (scripts + settings.json wiring).
-const hookResult = installHooks();
-for (const name of hookResult.installed) {
-  console.log(`  ${green}✓${reset} hooks/${name}`);
-}
-if (hookResult.registered) {
-  console.log(`  ${green}✓${reset} Registered SessionEnd hook in settings.json`);
-} else if (hookResult.warned) {
-  console.log(
-    `  ${yellow}!${reset} Could not parse .claude/settings.json — add this SessionEnd hook manually:`
-  );
-  console.log(`    ${dim}${KB_HOOK_COMMAND}${reset}`);
-} else if (hookResult.installed.length > 0) {
-  console.log(`  ${dim}SessionEnd hook already registered${reset}`);
+// Clean up what earlier versions installed and this one no longer ships.
+if (removeRetired() > 0) {
+  console.log(`  ${green}✓${reset} Removed retired port commands and session-summary hook`);
 }
 
 console.log(
-  `\n${green}Installed ${cmdFiles.length} commands, ${skillNames.length} skills, ${hookResult.installed.length} hooks (v${pkg.version}).${reset}`
+  `\n${green}Installed ${cmdFiles.length} commands, ${skillNames.length} skills (v${pkg.version}).${reset}`
 );
 console.log(
   `${dim}Commands: ${cmdFiles
@@ -366,9 +298,4 @@ console.log(
     .map((f) => '/quokka:' + f.replace('.md', ''))
     .join(', ')}${reset}`
 );
-if (hookResult.installed.length > 0) {
-  console.log(
-    `${dim}Session summaries will be written to knowledge-base/ when a session ends.${reset}`
-  );
-}
 console.log('');

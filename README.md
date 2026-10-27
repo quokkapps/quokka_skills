@@ -1,13 +1,11 @@
 # Quokka AI
 
-Shared Claude Code commands for the Quokkapps team. Generates platform-agnostic porting documents from source code analysis or GSD planning artifacts.
+Shared Claude Code commands and skills for the Quokkapps team: the `/quokka:cr` change-request flow and mobile feature test design.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/quokka:port-feature` | Scan source code by feature description and generate a platform-agnostic porting document. For features NOT built with GSD. |
-| `/quokka:port-gsd-feature` | Analyze a completed GSD feature (phase, milestone, quick task) and generate a platform-agnostic porting document. For features built with GSD. |
 | `/quokka:feature-test-design` | Before building a mobile native / KMP feature (Android/iOS): interview the dev, research the live code, and generate a test plan that clearly marks the must-test 20%. |
 | `/quokka:cr` | Change-request flow from idea to shipped code: CR list row → CR detail doc → CR design canvas (one page per surface), each approved, then hand-off to the `*-Design-Main` canvases and tickets, a test-first build with Codex review and proof screenshots, and close. Installed globally, so it works from any folder. |
 | `/quokka:update` | Update commands to the latest version from GitHub. |
@@ -23,21 +21,6 @@ Shared Claude Code commands for the Quokkapps team. Generates platform-agnostic 
 Skills install into `.claude/skills/` via the same installer. Run `/quokka:feature-test-design`
 to use it, or invoke the skill directly.
 
-## Hooks
-
-| Hook | Description |
-|------|-------------|
-| `SessionEnd` knowledge base | When a Claude Code session ends, a background job judges whether the work was worth recording. If so, it writes an HTML summary (overview, **key decisions + rationale**, core ideas, outputs/artifacts) to `knowledge-base/<date>_<title>.html`. Trivial sessions are skipped. |
-
-How it works:
-
-- Two scripts install into `.claude/hooks/`: `quokka-knowledge-summary.sh` (dispatcher — detaches the work so it never blocks the session closing) and `quokka-knowledge-worker.sh` (extracts the transcript, asks a headless `claude -p` to judge + summarize, writes the file).
-- The installer idempotently registers the `SessionEnd` hook in `.claude/settings.json` (existing settings and hooks are preserved).
-- A cheap pre-filter skips short/trivial sessions before spending any tokens; the rest are judged by the model, which writes nothing for sessions with no meaningful decisions.
-- Requires `jq` and the `claude` CLI on PATH. A recursion guard (`CLAUDE_KB_SUMMARY_GUARD`) prevents the summary's own `claude` call from re-triggering the hook.
-
-> Note: `SessionEnd` hooks added mid-session may need a Claude Code restart (or opening `/hooks` once) to load.
-
 ## Installation
 
 Run from any project directory where you want the commands available:
@@ -46,7 +29,9 @@ Run from any project directory where you want the commands available:
 npx --yes github:quokkapps/quokka_skills
 ```
 
-This installs `/quokka:cr` and its skill globally (`~/.claude/commands/quokka/cr.md`, `~/.claude/skills/quokka-cr/`) plus the shipped project files to `~/.quokka/cr/projects/`, and copies the other commands into `.claude/commands/quokka/`, skills into `.claude/skills/`, and hook scripts into `.claude/hooks/` in the nearest `.claude` directory, and registers the `SessionEnd` knowledge-base hook in `.claude/settings.json`.
+This installs `/quokka:cr` and its skill globally (`~/.claude/commands/quokka/cr.md`, `~/.claude/skills/quokka-cr/`) plus the shipped project files to `~/.quokka/cr/projects/`, and copies the other commands into `.claude/commands/quokka/` and skills into `.claude/skills/` in the nearest `.claude` directory.
+
+Updating from v1.3 or earlier removes the retired `/quokka:port-feature` and `/quokka:port-gsd-feature` commands and the `SessionEnd` knowledge-base hook (scripts and `settings.json` entry). Your other settings and hooks are kept.
 
 ## Updating
 
@@ -72,27 +57,16 @@ npx github:quokkapps/quokka_skills --uninstall
 
 ## Usage
 
-### Port a feature from source code (no GSD)
-
 ```
-/quokka:port-feature analytics for InTour screen
-/quokka:port-feature audio playback during tour navigation
-/quokka:port-feature offline tour download --scope app/src/main/.../feature/download/
+/quokka:cr                          # set up, then list CRs and the next command for each
+/quokka:cr new <idea>               # add a CR list row
+/quokka:cr build QG-CR-22           # build an approved, handed-off CR
+/quokka:feature-test-design <feature>
 ```
-
-### Port a GSD feature from planning artifacts
-
-```
-/quokka:port-gsd-feature phase 16
-/quokka:port-gsd-feature milestone v1.2
-/quokka:port-gsd-feature quick 2
-```
-
-Both commands output a platform-agnostic porting document to `.planning/ports/`. The document describes WHAT the feature does, not HOW to implement it — the destination team decides their own architecture.
 
 ## How it works
 
 - Commands are installed as standard Claude Code slash commands in `.claude/commands/quokka/`
-- Skills install into `.claude/skills/`; hook scripts into `.claude/hooks/` (with the `SessionEnd` hook registered in `.claude/settings.json`)
+- Skills install into `.claude/skills/`; `/quokka:cr` and its skill install globally into `~/.claude/`
 - Versioning is controlled by git tags (e.g., `git tag v1.1.0 && git push --tags`)
-- The install script (`bin/install.js`) handles install, update, and uninstall (uninstall also removes the hook scripts and the `SessionEnd` settings entry)
+- The install script (`bin/install.js`) handles install, update, and uninstall
