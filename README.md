@@ -9,6 +9,7 @@ Shared Claude Code commands for the Quokkapps team. Generates platform-agnostic 
 | `/quokka:port-feature` | Scan source code by feature description and generate a platform-agnostic porting document. For features NOT built with GSD. |
 | `/quokka:port-gsd-feature` | Analyze a completed GSD feature (phase, milestone, quick task) and generate a platform-agnostic porting document. For features built with GSD. |
 | `/quokka:feature-test-design` | Before building a mobile native / KMP feature (Android/iOS): interview the dev, research the live code, and generate a test plan that clearly marks the must-test 20%. |
+| `/quokka:cr` | Change-request flow from idea to shipped code: CR list row → CR detail doc → CR design canvas (one page per surface), each approved, then hand-off to the `*-Design-Main` canvases and tickets, a test-first build with Codex review and proof screenshots, and close. Installed globally, so it works from any folder. |
 | `/quokka:update` | Update commands to the latest version from GitHub. |
 
 ## Skills
@@ -16,6 +17,8 @@ Shared Claude Code commands for the Quokkapps team. Generates platform-agnostic 
 | Skill | Description |
 |-------|-------------|
 | `quokka-feature-test-design` | The engine behind `/quokka:feature-test-design`. For Android / iOS / KMP repos: a 9-item interview, code-grounded use-case discovery, and a two-tier plan that calls out the must-test 20% the dev executes. Writes to `docs/test-plans/` (+ optional Confluence). |
+
+| `quokka-cr` | The engine behind `/quokka:cr`. Project settings ship in `projects/*.json` (QG, INS); each dev's clone paths and devices live in `~/.quokka/cr/<slug>.local.json`, written on first run. |
 
 Skills install into `.claude/skills/` via the same installer. Run `/quokka:feature-test-design`
 to use it, or invoke the skill directly.
@@ -43,7 +46,7 @@ Run from any project directory where you want the commands available:
 npx --yes github:quokkapps/quokka_skills
 ```
 
-This copies commands into `.claude/commands/quokka/`, skills into `.claude/skills/`, and hook scripts into `.claude/hooks/` in the nearest `.claude` directory, and registers the `SessionEnd` knowledge-base hook in `.claude/settings.json`.
+This installs `/quokka:cr` and its skill globally (`~/.claude/commands/quokka/cr.md`, `~/.claude/skills/quokka-cr/`) plus the shipped project files to `~/.quokka/cr/projects/`, and copies the other commands into `.claude/commands/quokka/`, skills into `.claude/skills/`, and hook scripts into `.claude/hooks/` in the nearest `.claude` directory, and registers the `SessionEnd` knowledge-base hook in `.claude/settings.json`.
 
 ## Updating
 

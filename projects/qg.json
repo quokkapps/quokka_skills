@@ -1,0 +1,98 @@
+{
+  "slug": "qg",
+  "name": "QuokkaGuide",
+  "prefix": "QG",
+  "idWidth": 2,
+  "crList": {
+    "name": "QG-CR-List",
+    "artifact": "https://claude.ai/artifact/21KMJ1QGKrxfZi8oGuQgfv",
+    "kind": "claude-doc"
+  },
+  "surfaces": [
+    {
+      "key": "app",
+      "label": "App",
+      "main": { "name": "QG-App-Design-Main", "artifact": "https://claude.ai/artifact/H9HjEH7CqNz6Z1TzeSdTWs" },
+      "ds": { "name": "QG-App-DS", "artifact": "https://claude.ai/artifact/FfSAS4Mr9XTYwfsJk2h1MZ" },
+      "repos": ["app"]
+    },
+    {
+      "key": "web-traveller",
+      "label": "Web Traveller",
+      "main": { "name": "QG-Web-Traveller-Design-Main", "artifact": "https://claude.ai/artifact/R6q3bvzKYS8BzGcNPZvxfm" },
+      "ds": { "name": "QG-Web-Traveller-DS", "artifact": "https://claude.ai/artifact/2E1SubJDwLg7ViUi5Y12Vi" },
+      "repos": ["web"]
+    },
+    {
+      "key": "web-creator",
+      "label": "Web Creator",
+      "main": { "name": "QG-Web-Creator-Design-Main", "artifact": "https://claude.ai/artifact/CYBqCU4Fz59fvYR9awTYoc" },
+      "ds": { "name": "QG-Web-CreatorAdmin-DS", "artifact": "https://claude.ai/artifact/A6wHLGBMfPrNBXihSDeP8j" },
+      "repos": ["web"]
+    },
+    {
+      "key": "web-admin",
+      "label": "Web Admin",
+      "main": { "name": "QG-Web-Admin-Design-Main", "artifact": "https://claude.ai/artifact/3G4ovxctadtgRsw8dpCis6" },
+      "ds": { "name": "QG-Web-CreatorAdmin-DS", "artifact": "https://claude.ai/artifact/A6wHLGBMfPrNBXihSDeP8j" },
+      "repos": ["web"]
+    }
+  ],
+  "approvers": [],
+  "tickets": {
+    "system": "github",
+    "byRepo": {
+      "app": "quokkapps/quokkaguide-kmp",
+      "web": "quokkapps/quokkaguideweb"
+    },
+    "label": "cr:{id}",
+    "crossLink": true
+  },
+  "confluence": null,
+  "repos": {
+    "app": {
+      "id": "github:quokkapps/quokkaguide-kmp",
+      "defaultBranch": "main",
+      "kind": "kmp-mobile",
+      "gitignoredFiles": [
+        "android/app/src/staging/google-services.json",
+        "android/app/src/production/google-services.json",
+        "android/app/src/staging/assets/",
+        "android/app/src/production/assets/",
+        "android/app/appcdm_debug.jks",
+        "ios/Quokka/Supporting Files/GoogleServices/Staging/GoogleService-Info.plist",
+        "ios/Quokka/Supporting Files/GoogleServices/Prod/GoogleService-Info.plist"
+      ],
+      "gates": {
+        "targeted": "cd android && ./gradlew --no-watch-fs <module>:testDebugUnitTest --tests <Test>",
+        "module": "cd android && ./gradlew --no-watch-fs <module>:testDebugUnitTest spotlessCheck",
+        "full": "cd android && ./gradlew --no-watch-fs spotlessCheck testDebugUnitTest :app:assembleStagingDebug :shared:sdk:assembleQuokkaSharedDebugXCFramework && cd ../ios && xcodebuild -workspace Quokka.xcworkspace -scheme QuokkaSTG build",
+        "iosTest": "xcodebuild test -workspace ios/Quokka.xcworkspace -scheme QuokkaSTG -destination 'id=<simUdid>' -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 120 -maximum-test-execution-time-allowance 300"
+      },
+      "env": { "JAVA_HOME": "<local jdk17>" },
+      "screenshotTests": "Roborazzi (baselines stay committed)",
+      "staging": {
+        "androidPackage": "com.vata.quokkaguide.staging",
+        "launch": "adb -s <emulator> shell monkey -p com.vata.quokkaguide.staging -c android.intent.category.LAUNCHER 1"
+      }
+    },
+    "web": {
+      "id": "github:quokkapps/quokkaguideweb",
+      "defaultBranch": "main",
+      "kind": "web-monorepo",
+      "gates": {
+        "targeted": "read the repo's package.json / AGENTS.md for the per-app test command",
+        "module": "read the repo's package.json / AGENTS.md",
+        "full": "read the repo's package.json / AGENTS.md"
+      },
+      "screenshotTests": "browser screenshots of changed pages at 390px and 1440px"
+    }
+  },
+  "deviceRules": [
+    "Android: install and test ONLY on the configured emulator with `adb -s <emulator> install -r <apk>`. NEVER run Gradle install* or connected* tasks: they reach every connected device, including physical phones and watches.",
+    "iOS: simulator only. Drive the app through XCUITest (idb taps are dropped on this Xcode).",
+    "Never buy anything, reset a password, or delete the test account."
+  ],
+  "testAccount": "Ask Tam for the QG staging test login. Never commit it.",
+  "screenshots": { "commit": false }
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const green = '\x1b[32m';
@@ -26,12 +27,13 @@ function findClaudeDir() {
   return path.join(process.cwd(), '.claude');
 }
 
-function copyDir(src, dest) {
+function copyDir(src, dest, skip = []) {
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(dest, { recursive: true });
   }
   const entries = fs.readdirSync(src, { withFileTypes: true });
   for (const entry of entries) {
+    if (skip.includes(entry.name)) continue;
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
     if (entry.isDirectory()) {
@@ -40,6 +42,15 @@ function copyDir(src, dest) {
       fs.copyFileSync(srcPath, destPath);
     }
   }
+}
+
+// Relative paths of every file under dir.
+function listFiles(dir, prefix = '') {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory()
+      ? listFiles(path.join(dir, e.name), path.join(prefix, e.name))
+      : [path.join(prefix, e.name)]
+  );
 }
 
 function removeDir(dir) {
@@ -63,6 +74,17 @@ const hooksSrc = path.join(packageRoot, 'hooks');
 const hooksDest = path.join(claudeDir, 'hooks');
 const settingsPath = path.join(claudeDir, 'settings.json');
 
+// /quokka:cr must work from any folder, so its command, skill and the shipped
+// project files install globally. QUOKKA_HOME overrides the home dir (tests).
+const GLOBAL_COMMANDS = ['cr.md'];
+const GLOBAL_SKILLS = ['quokka-cr'];
+const globalRoot = process.env.QUOKKA_HOME || os.homedir();
+const globalCommandsDest = path.join(globalRoot, '.claude', 'commands', 'quokka');
+const globalSkillsDest = path.join(globalRoot, '.claude', 'skills');
+const projectsSrc = path.join(packageRoot, 'projects');
+const globalProjectsDest = path.join(globalRoot, '.quokka', 'cr', 'projects');
+const globalVersionFile = path.join(globalRoot, '.quokka', 'cr', '.version');
+
 // The SessionEnd knowledge-base hook. The dispatcher command is the stable
 // identity used for idempotent install/uninstall in settings.json.
 const KB_HOOK_SCRIPT = 'quokka-knowledge-summary.sh';
@@ -73,8 +95,57 @@ function shippedSkillNames() {
   if (!fs.existsSync(skillsSrc)) return [];
   return fs
     .readdirSync(skillsSrc, { withFileTypes: true })
-    .filter((e) => e.isDirectory())
+    .filter((e) => e.isDirectory() && !GLOBAL_SKILLS.includes(e.name))
     .map((e) => e.name);
+}
+
+// Shipped project files (projects/*.json). Never includes the local/ registry.
+const projectFiles = fs.existsSync(projectsSrc)
+  ? fs.readdirSync(projectsSrc).filter((f) => f.endsWith('.json'))
+  : [];
+
+function globalInstalled() {
+  if (!fs.existsSync(globalVersionFile)) return false;
+  if (fs.readFileSync(globalVersionFile, 'utf-8').trim() !== pkg.version) return false;
+  return (
+    GLOBAL_COMMANDS.every((f) => fs.existsSync(path.join(globalCommandsDest, f))) &&
+    GLOBAL_SKILLS.every((n) =>
+      listFiles(path.join(skillsSrc, n)).every((rel) => fs.existsSync(path.join(globalSkillsDest, n, rel)))
+    ) &&
+    projectFiles.every((f) => fs.existsSync(path.join(globalProjectsDest, f)))
+  );
+}
+
+function installGlobal() {
+  fs.mkdirSync(globalCommandsDest, { recursive: true });
+  for (const f of GLOBAL_COMMANDS) {
+    fs.copyFileSync(path.join(commandsSrc, f), path.join(globalCommandsDest, f));
+  }
+  for (const n of GLOBAL_SKILLS) {
+    removeDir(path.join(globalSkillsDest, n));
+    copyDir(path.join(skillsSrc, n), path.join(globalSkillsDest, n));
+  }
+  fs.mkdirSync(globalProjectsDest, { recursive: true });
+  for (const f of projectFiles) {
+    fs.copyFileSync(path.join(projectsSrc, f), path.join(globalProjectsDest, f));
+  }
+  fs.writeFileSync(globalVersionFile, pkg.version + '\n');
+}
+
+// Removes only what this package shipped; local/ and *.local.json stay.
+function uninstallGlobal() {
+  let removed = 0;
+  const targets = [
+    ...GLOBAL_COMMANDS.map((f) => path.join(globalCommandsDest, f)),
+    ...GLOBAL_SKILLS.map((n) => path.join(globalSkillsDest, n)),
+    ...projectFiles.map((f) => path.join(globalProjectsDest, f)),
+  ];
+  // removeDir also removes plain files.
+  for (const p of targets) {
+    if (removeDir(p)) removed++;
+  }
+  fs.rmSync(globalVersionFile, { force: true });
+  return removed;
 }
 
 // Names of the hook scripts this package ships.
@@ -180,6 +251,10 @@ if (hasUninstall) {
       console.log(`  ${green}✓${reset} Removed skills/${name}/`);
     }
   }
+  const removedGlobal = uninstallGlobal();
+  if (removedGlobal > 0) {
+    console.log(`  ${green}✓${reset} Removed /quokka:cr global files (kept local projects)`);
+  }
   const { removedScripts, unregistered } = uninstallHooks();
   if (removedScripts > 0) {
     console.log(`  ${green}✓${reset} Removed ${removedScripts} hook script(s)`);
@@ -200,7 +275,9 @@ if (fs.existsSync(versionFile)) {
 
 function commandsInstalled() {
   if (!fs.existsSync(commandsDest)) return false;
-  const srcFiles = fs.readdirSync(commandsSrc).filter((f) => f.endsWith('.md'));
+  const srcFiles = fs
+    .readdirSync(commandsSrc)
+    .filter((f) => f.endsWith('.md') && !GLOBAL_COMMANDS.includes(f));
   return srcFiles.every((f) => fs.existsSync(path.join(commandsDest, f)));
 }
 
@@ -224,7 +301,8 @@ if (
   installedVersion === pkg.version &&
   commandsInstalled() &&
   skillsInstalled() &&
-  hooksInstalled()
+  hooksInstalled() &&
+  globalInstalled()
 ) {
   console.log(`${green}Already up to date.${reset} (v${pkg.version})\n`);
   process.exit(0);
@@ -242,7 +320,7 @@ if (!fs.existsSync(commandsSrc)) {
 }
 
 // Install commands
-copyDir(commandsSrc, commandsDest);
+copyDir(commandsSrc, commandsDest, GLOBAL_COMMANDS);
 fs.writeFileSync(versionFile, pkg.version + '\n');
 const cmdFiles = fs.readdirSync(commandsDest).filter((f) => f.endsWith('.md'));
 for (const file of cmdFiles) {
@@ -256,6 +334,12 @@ for (const name of skillNames) {
   copyDir(path.join(skillsSrc, name), path.join(skillsDest, name));
   console.log(`  ${green}✓${reset} skills/${name}/`);
 }
+
+// Install /quokka:cr globally (command, skill, shipped project files).
+installGlobal();
+for (const f of GLOBAL_COMMANDS) console.log(`  ${green}✓${reset} global: ${path.join(globalCommandsDest, f)}`);
+for (const n of GLOBAL_SKILLS) console.log(`  ${green}✓${reset} global: ${path.join(globalSkillsDest, n)}/`);
+console.log(`  ${green}✓${reset} global: ${globalProjectsDest}/ (${projectFiles.join(', ')})`);
 
 // Install the SessionEnd knowledge-base hook (scripts + settings.json wiring).
 const hookResult = installHooks();
@@ -278,6 +362,7 @@ console.log(
 );
 console.log(
   `${dim}Commands: ${cmdFiles
+    .concat(GLOBAL_COMMANDS)
     .map((f) => '/quokka:' + f.replace('.md', ''))
     .join(', ')}${reset}`
 );

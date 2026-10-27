@@ -8,6 +8,11 @@ const { execFileSync } = require('child_process');
 
 const repoRoot = path.resolve(__dirname, '..');
 
+// Global installs (the /quokka:cr command, skill and project files) go under
+// QUOKKA_HOME. Point it at a throwaway dir so tests never touch the real HOME.
+const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'qsthome-'));
+process.env.QUOKKA_HOME = fakeHome;
+
 // 1. Make a throwaway "project" with a .claude dir to install into.
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'qst-'));
 fs.mkdirSync(path.join(tmp, '.claude'), { recursive: true });
@@ -123,5 +128,80 @@ execFileSync('node', [installer], { cwd: tmp2, stdio: 'pipe' });
 assert.ok(fs.existsSync(skillMd), 'expected SKILL.md to be restored after self-repair re-install');
 
 fs.rmSync(tmp2, { recursive: true, force: true });
+
+// ── /quokka:cr global install ─────────────────────────────────────────────────
+const tmp4 = fs.mkdtempSync(path.join(os.tmpdir(), 'qst4-'));
+fs.mkdirSync(path.join(tmp4, '.claude'), { recursive: true });
+const home4 = fs.mkdtempSync(path.join(os.tmpdir(), 'qsthome4-'));
+const env4 = { ...process.env, QUOKKA_HOME: home4 };
+execFileSync('node', [installer], { cwd: tmp4, stdio: 'pipe', env: env4 });
+
+// crInstalledGlobally
+const gCmd = path.join(home4, '.claude', 'commands', 'quokka', 'cr.md');
+const gSkill = path.join(home4, '.claude', 'skills', 'quokka-cr', 'SKILL.md');
+const gQg = path.join(home4, '.quokka', 'cr', 'projects', 'qg.json');
+const gIns = path.join(home4, '.quokka', 'cr', 'projects', 'ins.json');
+for (const p of [gCmd, gSkill, gQg, gIns]) {
+  assert.ok(fs.existsSync(p), `expected global install of ${p}`);
+}
+
+// crNotInProjectInstall
+assert.ok(
+  !fs.existsSync(path.join(tmp4, '.claude', 'commands', 'quokka', 'cr.md')),
+  'cr.md must not be installed per-project (global only)'
+);
+assert.ok(
+  !fs.existsSync(path.join(tmp4, '.claude', 'skills', 'quokka-cr')),
+  'quokka-cr skill must not be installed per-project (global only)'
+);
+assert.ok(
+  fs.existsSync(path.join(tmp4, '.claude', 'commands', 'quokka', 'port-feature.md')),
+  'other commands still install per-project'
+);
+
+// localSurvivesReinstall
+const localDir = path.join(home4, '.quokka', 'cr', 'projects', 'local');
+fs.mkdirSync(localDir, { recursive: true });
+fs.writeFileSync(path.join(localDir, 'acme.json'), '{"slug":"acme"}');
+const localCfg = path.join(home4, '.quokka', 'cr', 'qg.local.json');
+fs.writeFileSync(localCfg, '{"repos":{}}');
+const out = execFileSync('node', [installer], { cwd: tmp4, stdio: 'pipe', env: env4 }).toString();
+assert.ok(out.includes('Already up to date'), 'second run should be up to date');
+fs.rmSync(gSkill);
+execFileSync('node', [installer], { cwd: tmp4, stdio: 'pipe', env: env4 });
+assert.ok(fs.existsSync(gSkill), 'missing global skill should self-repair');
+const gRef = path.join(home4, '.claude', 'skills', 'quokka-cr', 'references', 'build.md');
+fs.rmSync(gRef);
+execFileSync('node', [installer], { cwd: tmp4, stdio: 'pipe', env: env4 });
+assert.ok(fs.existsSync(gRef), 'missing global skill reference should self-repair');
+assert.ok(fs.existsSync(path.join(localDir, 'acme.json')), 'local project must survive reinstall');
+assert.ok(fs.existsSync(localCfg), 'local machine file must survive reinstall');
+
+// uninstallKeepsLocal
+execFileSync('node', [installer, '--uninstall'], { cwd: tmp4, stdio: 'pipe', env: env4 });
+for (const p of [gCmd, gSkill, gQg, gIns]) {
+  assert.ok(!fs.existsSync(p), `expected uninstall to remove ${p}`);
+}
+assert.ok(fs.existsSync(path.join(localDir, 'acme.json')), 'uninstall must keep local projects');
+assert.ok(fs.existsSync(localCfg), 'uninstall must keep local machine files');
+fs.rmSync(tmp4, { recursive: true, force: true });
+fs.rmSync(home4, { recursive: true, force: true });
+
+// projectFilesValid
+const projDir = path.join(repoRoot, 'projects');
+for (const f of fs.readdirSync(projDir).filter((n) => n.endsWith('.json'))) {
+  const proj = JSON.parse(fs.readFileSync(path.join(projDir, f), 'utf-8'));
+  for (const key of ['slug', 'prefix', 'idWidth', 'crList', 'surfaces', 'tickets', 'repos', 'deviceRules']) {
+    assert.ok(key in proj, `${f}: missing ${key}`);
+  }
+  const ids = JSON.stringify(proj).match(/claude\.ai\/artifact\/[A-Za-z0-9]+/g) || [];
+  for (const id of ids) {
+    assert.strictEqual(id.split('/').pop().length, 22, `${f}: bad artifact id ${id}`);
+  }
+  for (const [role, repo] of Object.entries(proj.repos)) {
+    assert.ok(/^(github|bitbucket):[^/\s]+\/[^/\s]+$/.test(repo.id), `${f}: repo ${role} needs provider:owner/repo`);
+  }
+}
+fs.rmSync(fakeHome, { recursive: true, force: true });
 
 console.log('install.test.js PASSED');

@@ -1,0 +1,86 @@
+{
+  "slug": "ins",
+  "name": "INS LifeGuardian + Connect",
+  "prefix": "INS",
+  "idWidth": 3,
+  "crList": {
+    "name": "INS-CR-List",
+    "artifact": "https://claude.ai/artifact/CrgDfc6S451eizNafyYrrp",
+    "kind": "html-db",
+    "collection": "decisions"
+  },
+  "surfaces": [
+    {
+      "key": "lg-app",
+      "label": "LifeGuardian app",
+      "main": { "name": "INS-App-LG-Design-Main", "artifact": "https://claude.ai/artifact/JpETRFw1xoxtXBoPUV3g5c" },
+      "ds": { "name": "INS-App-LG-DS", "artifact": "https://claude.ai/artifact/9ma4DoiwamN8ZHp5EHG6eV" },
+      "repos": ["lg-android", "lg-ios"]
+    },
+    {
+      "key": "lgc-app",
+      "label": "Connect app",
+      "main": { "name": "INS-App-LGC-Design-Main", "artifact": "https://claude.ai/artifact/JFBSE3236gVPkq9bgyM9NT" },
+      "ds": {
+        "name": "INS-App-LG-DS",
+        "artifact": "https://claude.ai/artifact/9ma4DoiwamN8ZHp5EHG6eV",
+        "note": "INS-App-LGC-DS is not built yet; Connect shares INS-App-LG-DS (Tam, 2026-10-27)."
+      },
+      "repos": ["connect"]
+    }
+  ],
+  "approvers": [
+    { "gate": "design", "order": 1, "role": "Manager", "atlassianAccountId": null },
+    { "gate": "design", "order": 2, "role": "Josh", "atlassianAccountId": null }
+  ],
+  "approversNote": "Fill atlassianAccountId for both before the first INS hand-off (acli or Confluence user search). Until then the skill stops at named-approvals and asks Tam.",
+  "tickets": {
+    "system": "jira",
+    "site": "theinsgroup.atlassian.net",
+    "project": "MA",
+    "cli": "acli",
+    "label": "cr-{id}"
+  },
+  "confluence": {
+    "site": "theinsgroup.atlassian.net",
+    "space": "APP",
+    "parentTitle": "Feature Requests",
+    "titlePattern": "{id} {title}",
+    "replaces": "FR-Mobile-<name> pages from the retired ins-feature-request skill",
+    "tracker": ["Manager", "Josh", "Ticket"]
+  },
+  "repos": {
+    "lg-android": {
+      "id": "bitbucket:ins-1234/lifeguardian-android",
+      "defaultBranch": "read from the clone (git symbolic-ref refs/remotes/origin/HEAD)",
+      "kind": "android",
+      "androidPackage": "com.ins.smarthomemini",
+      "gates": {
+        "targeted": "./gradlew <module>:testDebugUnitTest --tests <Test>",
+        "module": "./gradlew <module>:testDebugUnitTest",
+        "full": "read the repo's AGENTS.md / CLAUDE.md for the full gate"
+      }
+    },
+    "lg-ios": {
+      "id": "bitbucket:ins-1234/lifeguardian-ios",
+      "defaultBranch": "read from the clone",
+      "kind": "ios",
+      "gates": { "full": "read the repo's AGENTS.md / CLAUDE.md; xcodebuild with -parallel-testing-enabled NO" }
+    },
+    "connect": {
+      "id": "bitbucket:ins-1234/lifeguardian-connect-kmp",
+      "defaultBranch": "read from the clone",
+      "kind": "kmp-mobile",
+      "androidPackage": "com.ins.smartcarer",
+      "gates": { "full": "read the repo's AGENTS.md / CLAUDE.md for the full gate" }
+    }
+  },
+  "deviceRules": [
+    "Android: STAGING builds only, on the configured emulator only, installed with `adb -s <emulator> install -r <apk>`. NEVER run Gradle install* or connected* tasks.",
+    "iOS: simulator only.",
+    "Never name a nurse or claim who is on shift in UI copy; the app cannot know who answers.",
+    "SOS stays single tap with the existing 10-second pre-alarm countdown; never propose press-and-hold."
+  ],
+  "testAccount": "Ask Tam for the INS staging test login (OTP based). Never commit it.",
+  "screenshots": { "commit": false }
+}
