@@ -34,7 +34,9 @@ Each CR has three gates in order: `row`, then `detail`, then `design`. A gate ca
 
 When the current revision differs from the recorded one, that gate and every later gate are stale. Check every gate on every run, and show stale gates in the list.
 
-## `approve <CR-id> <gate> [name]`
+## `approve <CR-id> [gate] [name]`
+
+The gate is optional. Without it, approve the **first gate that is pending or stale**, in order row, detail, design, and name it in the confirmation. A word after the CR id that is not `row`, `detail` or `design` is the display name. Pass the gate only to pick one explicitly.
 
 1. The gate before this one must be approved and not stale. Otherwise name the blocker and stop.
 2. The gate's artifact must exist: row, detail doc or design canvas.
@@ -53,7 +55,7 @@ Anyone with a login may approve a QG gate. This is an attestation by a known acc
 
 `ins.json` lists the approvers for the `design` gate in order: Manager, then Josh.
 
-- `approve INS-CR-NNN design` records the dev's attestation as usual. That only opens the hand-off.
+- Approving the INS `design` gate records the dev's attestation as usual. That only opens the hand-off.
 - The named approvals happen on the Confluence page (`handoff.md` step 3). Each approver approves there with their own Atlassian account.
 - A name typed into this skill never counts as a named approval.
 - If an approver's `atlassianAccountId` is null in the project file, stop at `named-approvals-done`. Tell the dev to ask Tam for the ids, and to update `projects/ins.json` through a PR to `quokka_skills`.

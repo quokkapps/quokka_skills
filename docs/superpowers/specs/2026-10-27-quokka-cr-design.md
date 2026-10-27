@@ -122,7 +122,7 @@ Tam's local file is seeded from today's paths (`/Volumes/TamExtSSD/Documents/Sou
 | `/quokka:cr new <idea>` | Add a list row (Proposed) with the problem, the why and the surfaces touched. Any "build X" request also lands here. |
 | `/quokka:cr detail <CR-id>` | Needs an approved row. Explore the real code and write the CR detail doc: problem, proposal, affected screens and surfaces, repos touched, data/API changes, open questions. |
 | `/quokka:cr design <CR-id>` | Needs an approved detail. Build the CR design canvas: one page per surface (App, Web Traveller, Creator, Admin), each on its surface's DS, with notes tying boards back to detail sections. |
-| `/quokka:cr approve <CR-id> <gate> [name]` | Record a gate approval under the dev's tool login and the current revision (section 4). Gates: `row`, `detail`, `design`. Approving `design` starts the hand-off. |
+| `/quokka:cr approve <CR-id> [gate] [name]` | Record a gate approval under the dev's tool login and the current revision (section 4). Gates: `row`, `detail`, `design`. Approving `design` starts the hand-off. |
 | `/quokka:cr handoff <CR-id>` | Resume or re-check a hand-off (section 7). Safe to re-run at any time. |
 | `/quokka:cr build <CR-id>` | Implement (section 8). |
 | `/quokka:cr close <CR-id>` | Section 9. Never deletes anything. |
@@ -131,9 +131,9 @@ Tam's local file is seeded from today's paths (`/Volumes/TamExtSSD/Documents/Sou
 | `/quokka:cr share-project <slug>` | Propose a locally set-up project to the shared repo. |
 
 **Always suggest the next command (Tam, 2026-10-27).** Every sub-command ends with one line saying what is done and the exact command to run next, worked out from the CR's gate and hand-off state. Examples:
-- after `new`: `/quokka:cr approve QG-CR-22 row`
+- after `new`: `/quokka:cr approve QG-CR-22` (the gate is optional; the next pending or stale one is approved)
 - after the row is approved: `/quokka:cr detail QG-CR-22`
-- after `detail`: `/quokka:cr approve QG-CR-22 detail`
+- after `detail`: `/quokka:cr approve QG-CR-22`
 - after the design is approved: `/quokka:cr handoff QG-CR-22`
 - for INS while sign-off is pending: "waiting for Manager/Josh on <Confluence link>; re-run `/quokka:cr handoff INS-CR-015`"
 - after the hand-off: `/quokka:cr build QG-CR-22`

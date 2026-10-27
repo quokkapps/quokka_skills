@@ -12,6 +12,7 @@ const repoRoot = path.resolve(__dirname, '..');
 // QUOKKA_HOME. Point it at a throwaway dir so tests never touch the real HOME.
 const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'qsthome-'));
 process.env.QUOKKA_HOME = fakeHome;
+process.env.CLAUDE_CONFIG_DIR = path.join(fakeHome, '.claude');
 
 // 1. Make a throwaway "project" with a .claude dir to install into.
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'qst-'));
@@ -76,7 +77,8 @@ fs.writeFileSync(
     },
   })
 );
-execFileSync('node', [path.join(repoRoot, 'bin', 'install.js')], { cwd: tmp3, stdio: 'pipe' });
+const out3 = execFileSync('node', [path.join(repoRoot, 'bin', 'install.js')], { cwd: tmp3, stdio: 'pipe' }).toString();
+assert.ok(!out3.includes('commands/quokka/port-'), 'install summary must not list retired commands');
 for (const f of ['commands/quokka/port-feature.md', 'commands/quokka/port-gsd-feature.md',
   'hooks/quokka-knowledge-summary.sh', 'hooks/quokka-knowledge-worker.sh']) {
   assert.ok(!fs.existsSync(path.join(claude3, f)), `retired ${f} must be removed on update`);
@@ -119,7 +121,7 @@ fs.rmSync(tmp2, { recursive: true, force: true });
 const tmp4 = fs.mkdtempSync(path.join(os.tmpdir(), 'qst4-'));
 fs.mkdirSync(path.join(tmp4, '.claude'), { recursive: true });
 const home4 = fs.mkdtempSync(path.join(os.tmpdir(), 'qsthome4-'));
-const env4 = { ...process.env, QUOKKA_HOME: home4 };
+const env4 = { ...process.env, QUOKKA_HOME: home4, CLAUDE_CONFIG_DIR: path.join(home4, '.claude') };
 execFileSync('node', [installer], { cwd: tmp4, stdio: 'pipe', env: env4 });
 
 // crInstalledGlobally
@@ -152,6 +154,7 @@ fs.writeFileSync(path.join(localDir, 'acme.json'), '{"slug":"acme"}');
 const localCfg = path.join(home4, '.quokka', 'cr', 'qg.local.json');
 fs.writeFileSync(localCfg, '{"repos":{}}');
 const out = execFileSync('node', [installer], { cwd: tmp4, stdio: 'pipe', env: env4 }).toString();
+assert.ok(!out.includes('port-feature'), 'summary must not list retired commands');
 assert.ok(out.includes('Already up to date'), 'second run should be up to date');
 fs.rmSync(gSkill);
 execFileSync('node', [installer], { cwd: tmp4, stdio: 'pipe', env: env4 });
@@ -172,6 +175,32 @@ assert.ok(fs.existsSync(path.join(localDir, 'acme.json')), 'uninstall must keep 
 assert.ok(fs.existsSync(localCfg), 'uninstall must keep local machine files');
 fs.rmSync(tmp4, { recursive: true, force: true });
 fs.rmSync(home4, { recursive: true, force: true });
+
+// globalUsesClaudeConfigDir: CCS-style CLAUDE_CONFIG_DIR gets the command + skill.
+const tmp5 = fs.mkdtempSync(path.join(os.tmpdir(), 'qst5-'));
+fs.mkdirSync(path.join(tmp5, '.claude'), { recursive: true });
+const home5 = fs.mkdtempSync(path.join(os.tmpdir(), 'qsthome5-'));
+const cfg5 = path.join(home5, 'ccs', 'instances', 'account');
+execFileSync('node', [installer], {
+  cwd: tmp5,
+  stdio: 'pipe',
+  env: { ...process.env, QUOKKA_HOME: home5, CLAUDE_CONFIG_DIR: cfg5 },
+});
+assert.ok(fs.existsSync(path.join(cfg5, 'commands', 'quokka', 'cr.md')), 'cr.md must go to CLAUDE_CONFIG_DIR');
+assert.ok(fs.existsSync(path.join(cfg5, 'skills', 'quokka-cr', 'SKILL.md')), 'skill must go to CLAUDE_CONFIG_DIR');
+assert.ok(!fs.existsSync(path.join(home5, '.claude', 'commands', 'quokka', 'cr.md')), 'nothing in ~/.claude when CLAUDE_CONFIG_DIR is set');
+assert.ok(fs.existsSync(path.join(home5, '.quokka', 'cr', 'projects', 'qg.json')), 'project files stay under ~/.quokka');
+// A second config dir sharing the same home still gets its own install.
+const cfg5b = path.join(home5, 'ccs', 'instances', 'other');
+const out5 = execFileSync('node', [installer], {
+  cwd: tmp5,
+  stdio: 'pipe',
+  env: { ...process.env, QUOKKA_HOME: home5, CLAUDE_CONFIG_DIR: cfg5b },
+}).toString();
+assert.ok(!out5.includes('Already up to date'), 'a new config dir must not be treated as up to date');
+assert.ok(fs.existsSync(path.join(cfg5b, 'skills', 'quokka-cr', 'SKILL.md')), 'second config dir gets the skill');
+fs.rmSync(tmp5, { recursive: true, force: true });
+fs.rmSync(home5, { recursive: true, force: true });
 
 // projectFilesValid
 const projDir = path.join(repoRoot, 'projects');

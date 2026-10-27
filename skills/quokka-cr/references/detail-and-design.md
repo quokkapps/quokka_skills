@@ -9,7 +9,7 @@
 3. Search the list for a similar open CR. If one exists, show it and ask whether to add to it instead.
 4. Allocate the next id (`lists.md`), write the row, and record `<system>:<login>` as the proposer.
 
-Next: `/quokka:cr approve <id> row`.
+Next: `/quokka:cr approve <id>`.
 
 ## Detail
 
@@ -35,7 +35,7 @@ Next: `/quokka:cr approve <id> row`.
 
 Keep project rules in mind, such as the INS rules in `deviceRules` (never name a nurse, SOS is single tap). A proposal that breaks one is wrong. Say so rather than writing it.
 
-Next: `/quokka:cr approve <id> detail`.
+Next: `/quokka:cr approve <id>`.
 
 ## Design
 
@@ -58,4 +58,4 @@ Next: `/quokka:cr approve <id> detail`.
 
 If the design forces a change in the detail (a missing state, a new edge case), update the detail too. That makes the detail approval stale, so tell the dev to re-approve the detail before the design.
 
-Next: `/quokka:cr approve <id> design`.
+Next: `/quokka:cr approve <id>`.

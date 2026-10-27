@@ -29,7 +29,7 @@ The skill sits between people and four systems: Claude artifacts (canvases, docs
 ## Step 0 (every run): load the project
 
 1. **Resolve the project, in this order:**
-   1. the prefix in a CR id argument (`QG-CR-21` means `qg`)
+   1. the prefix in a CR id argument (`QG-CR-21` means `qg`). Never ask for `--project`, or print it in a next command, when a CR id is present.
    2. a `--project <slug>` flag
    3. the current folder's git root (or the current folder) matched against `repos.*.path` and `knownFolders` in `~/.quokka/cr/*.local.json`
    4. otherwise, ask which project and save the folder to that project's `knownFolders`
@@ -47,7 +47,7 @@ The skill sits between people and four systems: Claude artifacts (canvases, docs
 | `new <idea>` | `lists.md`, `detail-and-design.md` §New | — |
 | `detail <CR-id>` | `detail-and-design.md` §Detail, `artifacts.md` | row approved |
 | `design <CR-id>` | `detail-and-design.md` §Design, `artifacts.md` | detail approved |
-| `approve <CR-id> <gate> [name]` | `identity-and-gates.md`, `lists.md` | the gate's artifact exists |
+| `approve <CR-id> [gate] [name]` | `identity-and-gates.md`, `lists.md` | the gate's artifact exists |
 | `handoff <CR-id>` | `handoff.md`, `artifacts.md` | design approved |
 | `build <CR-id>` | `build.md`, `builder-brief.md` | hand-off `links-recorded`, no stale gate |
 | `close <CR-id>` | `close-and-cleanup.md` §Close | every PR merged |

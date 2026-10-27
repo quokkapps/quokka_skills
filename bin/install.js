@@ -75,14 +75,21 @@ const settingsPath = path.join(claudeDir, 'settings.json');
 
 // /quokka:cr must work from any folder, so its command, skill and the shipped
 // project files install globally. QUOKKA_HOME overrides the home dir (tests).
+// The command and skill go to Claude's user config dir: CLAUDE_CONFIG_DIR when
+// set (e.g. CCS instances), otherwise ~/.claude.
 const GLOBAL_COMMANDS = ['cr.md'];
 const GLOBAL_SKILLS = ['quokka-cr'];
 const globalRoot = process.env.QUOKKA_HOME || os.homedir();
-const globalCommandsDest = path.join(globalRoot, '.claude', 'commands', 'quokka');
-const globalSkillsDest = path.join(globalRoot, '.claude', 'skills');
+const globalClaudeDir = process.env.CLAUDE_CONFIG_DIR || path.join(globalRoot, '.claude');
+const globalCommandsDest = path.join(globalClaudeDir, 'commands', 'quokka');
+const globalSkillsDest = path.join(globalClaudeDir, 'skills');
 const projectsSrc = path.join(packageRoot, 'projects');
 const globalProjectsDest = path.join(globalRoot, '.quokka', 'cr', 'projects');
+// One marker for the shared project files, one per Claude config dir for the
+// command + skill, so each CCS instance updates on its own.
 const globalVersionFile = path.join(globalRoot, '.quokka', 'cr', '.version');
+const globalCrVersionFile = path.join(globalCommandsDest, '.cr-version');
+const globalVersionFiles = [globalVersionFile, globalCrVersionFile];
 
 // Items earlier versions installed per project and this one no longer ships.
 // Removed on install and uninstall so an update leaves nothing stale behind.
@@ -105,8 +112,8 @@ const projectFiles = fs.existsSync(projectsSrc)
   : [];
 
 function globalInstalled() {
-  if (!fs.existsSync(globalVersionFile)) return false;
-  if (fs.readFileSync(globalVersionFile, 'utf-8').trim() !== pkg.version) return false;
+  const current = (f) => fs.existsSync(f) && fs.readFileSync(f, 'utf-8').trim() === pkg.version;
+  if (!globalVersionFiles.every(current)) return false;
   return (
     GLOBAL_COMMANDS.every((f) => fs.existsSync(path.join(globalCommandsDest, f))) &&
     GLOBAL_SKILLS.every((n) =>
@@ -129,7 +136,7 @@ function installGlobal() {
   for (const f of projectFiles) {
     fs.copyFileSync(path.join(projectsSrc, f), path.join(globalProjectsDest, f));
   }
-  fs.writeFileSync(globalVersionFile, pkg.version + '\n');
+  for (const f of globalVersionFiles) fs.writeFileSync(f, pkg.version + '\n');
 }
 
 // Removes only what this package shipped; local/ and *.local.json stay.
@@ -144,7 +151,7 @@ function uninstallGlobal() {
   for (const p of targets) {
     if (removeDir(p)) removed++;
   }
-  fs.rmSync(globalVersionFile, { force: true });
+  for (const f of globalVersionFiles) fs.rmSync(f, { force: true });
   return removed;
 }
 
@@ -262,6 +269,12 @@ if (!fs.existsSync(commandsSrc)) {
   process.exit(1);
 }
 
+// Clean up what earlier versions installed and this one no longer ships,
+// before listing the installed commands.
+if (removeRetired() > 0) {
+  console.log(`  ${green}✓${reset} Removed retired port commands and session-summary hook`);
+}
+
 // Install commands
 copyDir(commandsSrc, commandsDest, GLOBAL_COMMANDS);
 fs.writeFileSync(versionFile, pkg.version + '\n');
@@ -283,11 +296,6 @@ installGlobal();
 for (const f of GLOBAL_COMMANDS) console.log(`  ${green}✓${reset} global: ${path.join(globalCommandsDest, f)}`);
 for (const n of GLOBAL_SKILLS) console.log(`  ${green}✓${reset} global: ${path.join(globalSkillsDest, n)}/`);
 console.log(`  ${green}✓${reset} global: ${globalProjectsDest}/ (${projectFiles.join(', ')})`);
-
-// Clean up what earlier versions installed and this one no longer ships.
-if (removeRetired() > 0) {
-  console.log(`  ${green}✓${reset} Removed retired port commands and session-summary hook`);
-}
 
 console.log(
   `\n${green}Installed ${cmdFiles.length} commands, ${skillNames.length} skills (v${pkg.version}).${reset}`

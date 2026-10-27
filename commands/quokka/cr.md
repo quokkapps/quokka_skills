@@ -1,7 +1,7 @@
 ---
 name: quokka:cr
 description: Change-request flow from idea to shipped code. CR list row, then CR detail doc, then CR design canvas (app + web), then hand-off to the main design canvas and tickets, then test-first build with Codex review and proof screenshots, then close. Nothing is built without an approved CR detail and design.
-argument-hint: "[new <idea> | detail <CR-id> | design <CR-id> | approve <CR-id> <row|detail|design> [name] | handoff <CR-id> | build <CR-id> | close <CR-id> | cleanup | resume | share-project <slug>] [--project <slug>]"
+argument-hint: "[new <idea> | detail <CR-id> | design <CR-id> | approve <CR-id> [row|detail|design] [name] | handoff <CR-id> | build <CR-id> | close <CR-id> | cleanup | resume | share-project <slug>] [--project <slug>]"
 allowed-tools:
   - Skill
   - Read

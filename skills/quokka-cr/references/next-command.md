@@ -1,16 +1,16 @@
 # Next command
 
-Every sub-command ends with one line: what is done, then the exact command to run next. Work it out from the CR's row, not from what just ran. When something blocks, name the blocker and the command that clears it.
+Every sub-command ends with one line: what is done, then the exact command to run next. Work it out from the CR's row, not from what just ran. A command with a CR id never carries `--project`; the prefix names the project. When something blocks, name the blocker and the command that clears it.
 
 | Row state | Next |
 |---|---|
 | no row | `/quokka:cr new <idea>` |
-| row pending | `/quokka:cr approve <id> row` |
+| row pending | `/quokka:cr approve <id>` |
 | row approved, no detail | `/quokka:cr detail <id>` |
-| detail exists, pending | `/quokka:cr approve <id> detail` (after reviewing <detail url>) |
+| detail exists, pending | `/quokka:cr approve <id>` (after reviewing <detail url>) |
 | detail approved, no design | `/quokka:cr design <id>` |
-| design exists, pending | `/quokka:cr approve <id> design` (after reviewing <design url>) |
-| any gate stale | re-approve the first stale gate: `/quokka:cr approve <id> <gate>` |
+| design exists, pending | `/quokka:cr approve <id>` (after reviewing <design url>) |
+| any gate stale | `/quokka:cr approve <id>` (approves the first stale gate) |
 | design approved, hand-off not started or part done | `/quokka:cr handoff <id>` |
 | INS, waiting on named approvals | "Waiting for <Manager/Josh> on <Confluence link>. Re-run `/quokka:cr handoff <id>` after they approve." |
 | `links-recorded`, no build | `/quokka:cr build <id>` |
