@@ -77,7 +77,7 @@ const settingsPath = path.join(claudeDir, 'settings.json');
 // project files install globally. QUOKKA_HOME overrides the home dir (tests).
 // The command and skill go to Claude's user config dir: CLAUDE_CONFIG_DIR when
 // set (e.g. CCS instances), otherwise ~/.claude.
-const GLOBAL_COMMANDS = ['cr.md'];
+const GLOBAL_COMMANDS = ['cr.md', 'cr-help.md', 'cr-setup.md', 'cr-health.md'];
 const GLOBAL_SKILLS = ['quokka-cr'];
 const globalRoot = process.env.QUOKKA_HOME || os.homedir();
 const globalClaudeDir = process.env.CLAUDE_CONFIG_DIR || path.join(globalRoot, '.claude');

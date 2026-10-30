@@ -29,11 +29,7 @@
       "repos": ["connect"]
     }
   ],
-  "approvers": [
-    { "gate": "design", "order": 1, "role": "Manager", "atlassianAccountId": null },
-    { "gate": "design", "order": 2, "role": "Josh", "atlassianAccountId": null }
-  ],
-  "approversNote": "Fill atlassianAccountId for both before the first INS hand-off (acli or Confluence user search). Until then the skill stops at named-approvals and asks Tam.",
+  "signoff": ["Manager", "Josh"],
   "tickets": {
     "system": "jira",
     "site": "theinsgroup.atlassian.net",
@@ -54,6 +50,7 @@
       "id": "bitbucket:ins-1234/lifeguardian-android",
       "defaultBranch": "read from the clone (git symbolic-ref refs/remotes/origin/HEAD)",
       "kind": "android",
+      "gitignoredFiles": ["secrets.properties", "local.properties"],
       "androidPackage": "com.ins.smarthomemini",
       "gates": {
         "targeted": "./gradlew <module>:testDebugUnitTest --tests <Test>",
@@ -65,12 +62,14 @@
       "id": "bitbucket:ins-1234/lifeguardian-ios",
       "defaultBranch": "read from the clone",
       "kind": "ios",
+      "gitignoredFiles": ["SOSApp/Configurations/Secrets-STG.xcconfig", "SOSApp/Configurations/Secrets-PROD.xcconfig"],
       "gates": { "full": "read the repo's AGENTS.md / CLAUDE.md; xcodebuild with -parallel-testing-enabled NO" }
     },
     "connect": {
       "id": "bitbucket:ins-1234/lifeguardian-connect-kmp",
       "defaultBranch": "read from the clone",
       "kind": "kmp-mobile",
+      "gitignoredFiles": ["secrets.properties", "local.properties", "iosApp/Configurations/Secrets-STG.xcconfig"],
       "androidPackage": "com.ins.smartcarer",
       "gates": { "full": "read the repo's AGENTS.md / CLAUDE.md for the full gate" }
     }

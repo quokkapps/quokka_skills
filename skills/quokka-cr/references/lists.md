@@ -8,12 +8,14 @@ The CR list is shared state. Every dev reads it, and every gate, hand-off step a
 |---|---|
 | `id` | `QG-CR-22` |
 | `title` | Choose a region on first launch |
-| `status` | Proposed, Approved, Detailed, Designed, Handed-off, In progress, Done, Rejected |
+| `status` | Proposed, Approved, Handed-off, In progress, Done, Rejected |
 | `problem`, `why` | one or two sentences each |
 | `surfaces` | `app, web-traveller` (surface keys from the project file) |
-| `gates.row/detail/design` | `{state, rev, by, name, date}` |
+| `scope` | only when the detail is skipped: what changes, repo roles touched, numbered acceptance criteria |
+| `skipped` | `{detail, design}`: each `{reason, by, date}` when the dev skipped that part |
+| `gates.build` | `{state, detailRev, designRev, scopeHash, by, name, date}` (`identity-and-gates.md`) |
 | `artifacts` | `{detail, design}` URLs |
-| `handoff` | `{state, detailRev, designRev, steps: [{step, startedAt, doneAt, ids}]}` |
+| `handoff` | `{state, detailRev, designRev, scopeHash, steps: [{step, startedAt, doneAt, ids}]}` |
 | `tickets` | issue/ticket URLs per repo role |
 | `confluence` | page URL (INS) |
 | `ledger` | per repo role: `{required, branch, gate, pr, mergedAt}` |
@@ -32,7 +34,7 @@ Neither adapter can reserve an id atomically, so two devs running `new` at once 
 
 ## Adapter: `claude-doc` (QG)
 
-The list is a Claude Docs doc with one table. Columns: `ID | Title | Status | Surfaces | Row | Detail | Design | Hand-off | Tickets | PRs`. Each gate cell reads like `approved @login r12 2026-10-27`, `stale`, or `pending`.
+The list is a Claude Docs doc with one table. Columns: `ID | Title | Status | Surfaces | Detail | Design | Approval | Hand-off | Tickets | PRs`. Detail and Design cells read `r12`, `skipped`, or `—` (missing). The Approval cell reads like `approved @login 2026-10-27`, `stale`, or `pending`.
 
 Any field that does not fit a cell goes in a section `## <CR-id>` under the table, as a fenced `json` block holding the full row record. That block is the source of truth. The table is the human view, regenerated from the block on every write.
 
@@ -60,9 +62,9 @@ The page renders from the db, so never republish the page to change a row. If th
 Rows that existed before this flow (QG-CR-01 to QG-CR-21, INS-CR-001 to INS-CR-044) are legacy records.
 
 - Backfill links to existing tickets and artifacts when found.
-- Assume nothing else. All gates start `pending`.
-- A legacy CR cannot authorise a build until its detail and design are approved under this flow, which binds the approvals to revisions.
+- Assume nothing else. The build approval starts `pending`.
+- A legacy CR cannot authorise a build until it has a build approval under this flow, which binds the approval to revisions.
 
 ## Bare `/quokka:cr`
 
-Show every open CR (not Done or Rejected) as a table: id, title, status, gate states, and the next command for that row (`next-command.md`). Then show Done CRs as a count only.
+Show every open CR (not Done or Rejected) as a table: id, title, status, detail and design state, approval state, and the next command for that row (`next-command.md`). Then show Done CRs as a count only.

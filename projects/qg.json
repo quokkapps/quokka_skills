@@ -38,7 +38,7 @@
       "repos": ["web"]
     }
   ],
-  "approvers": [],
+  "signoff": [],
   "tickets": {
     "system": "github",
     "byRepo": {

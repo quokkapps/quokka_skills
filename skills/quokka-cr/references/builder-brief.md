@@ -9,7 +9,9 @@ You are building <CR-id> <title> in one repo. Work only in this worktree:
 ## What to build
 Implement exactly the approved revisions below, nothing more:
 - Detail: <detail url> (rev <r>). Read it first. Acceptance criteria: <AC list>.
+  <Detail skipped: Scope: <row scope>. Acceptance criteria: <AC list from the scope>.>
 - Design: <design url> (version <v>), page <Surface>. Match it on <DS name>.
+  <Design skipped: No design. Follow the existing screens and <DS name>.>
 <Large builds only: Your task is <task n> of plan <ledger>/plan.md: <task text>.>
 
 If the design or detail is silent on something, decide, write the decision

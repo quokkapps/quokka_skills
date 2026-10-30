@@ -1,6 +1,6 @@
 {
   "name": "quokka-ai-cc",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Quokkapps AI commands for Claude Code: change-request flow (/quokka:cr) and mobile feature test design.",
   "bin": {
     "quokka-ai-cc": "bin/install.js"

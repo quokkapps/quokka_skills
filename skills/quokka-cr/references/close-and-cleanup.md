@@ -4,11 +4,11 @@
 
 `close <CR-id>` marks a CR Done. It never deletes anything.
 
-1. Work out the required repo roles from the approved detail ("Repos touched"), not from the ledger. An empty ledger, or a role with no PR, means the CR is not done.
+1. Work out the required repo roles from the approved detail ("Repos touched"), or the row's `scope` when the detail was skipped, not from the ledger. An empty ledger, or a role with no PR, means the CR is not done.
 2. For each required role, there must be a recorded PR, verified merged through the API:
    - GitHub: `gh pr view <url> --json state,mergedAt`
    - Bitbucket: the PR API state is `MERGED`
-3. For every surface, check that the main canvas holds the page `<CR-id> <title>`.
+3. For every surface, check that the main canvas holds the page `<CR-id> <title>`. Skip this when the design was skipped.
 4. **All merged and copied:**
    - Set the row to Done, with PR links, `mergedAt` dates, today's date and `<system>:<login>`.
    - Close each GitHub issue with a comment linking the PRs (`gh issue close <n> --comment …`). For Jira, move the ticket to Done with `acli jira workitem transition`.

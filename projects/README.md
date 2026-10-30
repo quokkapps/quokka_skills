@@ -11,7 +11,7 @@ Machine-specific values go in `~/.quokka/cr/<slug>.local.json`, which `/quokka:c
 | `slug`, `name`, `prefix`, `idWidth` | CR ids are `<prefix>-CR-<n>`, with `n` zero-padded to `idWidth` (QG `QG-CR-07`, INS `INS-CR-007`). |
 | `crList` | The CR list artifact. `kind` is `claude-doc` (a Claude Docs table) or `html-db` (an HTML page plus an artifact db `collection`). |
 | `surfaces[]` | One per design surface: `key`, `label`, `main` (the `*-Design-Main` canvas), `ds` (its design system), `repos` (repo roles that implement it). |
-| `approvers[]` | Named approvers per gate, in order, identified by Atlassian account id. Empty means anyone may approve, attested by tool login. |
+| `signoff[]` | Roles who approve the CR outside the skill, in order (INS: Manager, Josh). Before the build, the skill asks the dev whether they have approved; a `no` still lets the build start but holds the push and PR. Empty means no question. |
 | `tickets` | `system` is `github` (with `byRepo` role to `owner/repo`) or `jira` (`site`, `project`). `label` is the tag used to find existing tickets. |
 | `confluence` | `null`, or the space and parent where the combined detail + design page goes. |
 | `repos` | Role to canonical `id` (`provider:owner/repo`), the gate commands, the git-ignored files to copy into a fresh worktree, and staging info. |

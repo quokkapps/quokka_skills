@@ -5,12 +5,12 @@
 ## Preconditions (check all, then report every one that fails)
 
 1. The row reads `handoff.state = links-recorded`.
-2. All three gates are approved at the current revisions. Re-read the detail and design now.
-3. The hand-off's recorded `detailRev` and `designRev` equal the current approved revisions. If a gate was re-approved after the hand-off, the canvas copies, tickets and INS sign-off describe the old version. Stop and run `/quokka:cr handoff <id>` to refresh them.
-4. Every repo role the detail names is mapped in the local file.
+2. The build approval is approved at the current revisions. Re-read the detail and design (or the row's `scope`) now.
+3. The hand-off's recorded `detailRev`, `designRev` and `scopeHash` equal the current approved ones. If the CR was re-approved after the hand-off, the canvas copies, tickets and INS sign-off describe the old version. Stop and run `/quokka:cr handoff <id>` to refresh them.
+4. Every repo role the detail (or the `scope`) names is mapped in the local file.
 5. Each mapped clone passes the identity check (`setup.md` step 2).
 6. The dev's login is known.
-7. Named approvers (`approvers` not empty): re-read the Confluence page and re-validate every named approval against the current content hash (`identity-and-gates.md`). Someone may have edited the page since the hand-off. Do this again on `resume`.
+7. `signoff` not empty (INS): ask the sign-off question (`identity-and-gates.md` §Sign-off). This never blocks the build; a `no` only holds the push and PR.
 
 If any fail, stop and say exactly which, with the command that clears each.
 
@@ -23,9 +23,9 @@ If any fail, stop and say exactly which, with the command that clears each.
 3. Copy each `gitignoredFiles` entry from `secretsFrom[role]` into the worktree.
    - Copy each file. Never print its contents.
    - Confirm git still ignores it: `git check-ignore`.
-4. Create the repo ledger at `<worktree>/.quokka/cr/<CR-id>/`, with `progress.md`, `decisions.md`, `uat.md` and a `reviews/` folder. Write the approved `detailRev` and `designRev` at the top of `progress.md`.
+4. Create the repo ledger at `<worktree>/.quokka/cr/<CR-id>/`, with `progress.md`, `decisions.md`, `uat.md` and a `reviews/` folder. Write the approved `detailRev`, `designRev` and `scopeHash` at the top of `progress.md`.
    - Make sure `.quokka/` is ignored (`git check-ignore .quokka`). If it is not, append it to the file that `git -C <worktree> rev-parse --git-path info/exclude` prints. In a linked worktree `.git` is a file, so never write to `.git/info/exclude` directly. Never edit the repo's `.gitignore` for this.
-5. Write the repo's branch and worktree to the row's `ledger`, with `required: true` for every repo role the approved detail names. `close` uses that list.
+5. Write the repo's branch and worktree to the row's `ledger`, with `required: true` for every repo role the approved detail (or `scope`) names. `close` uses that list.
 
 ## Size the work (state the call to the dev)
 
@@ -95,10 +95,11 @@ Use the test account from the project's pointer. Ask the dev for credentials and
 4. Show the draft PR:
    - title `<CR-id> <title>`
    - body: what changed, the ticket, detail and design links, a screenshot list, open UAT rows from `uat.md`, and the gate output summary
-5. Ask: "Push `<branch>` and open this PR from your account?"
+5. Sign-off pending (`signoff` not empty and the row says `pending`): ask the sign-off question again. Still no: keep the local commits, push nothing, and stop with `Next: /quokka:cr <id>` once it is approved.
+6. Ask: "Push `<branch>` and open this PR from your account?"
    - Only on yes: `git push -u <remote> <branch>`, then `gh pr create` (GitHub) or the Bitbucket CLI or API (Bitbucket).
    - Never merge. Never force-push.
-6. Write the PR URL to the row's `ledger`. Set status In progress.
+7. Write the PR URL to the row's `ledger`. Set status In progress.
 
 Next: `/quokka:cr close <id>` once every PR is merged.
 
@@ -109,7 +110,7 @@ Next: `/quokka:cr close <id>` once every PR is merged.
 2. each worktree's `.quokka/cr/<CR-id>/progress.md`
 
 Then:
-1. Re-check the preconditions. A stale gate stops the resume.
-2. Compare the `detailRev` and `designRev` at the top of `progress.md` with the current approved revisions. If they differ, the work was done for an older version. Mark every done task as needing re-check, re-plan against the new revisions (large), and tell the dev what changed.
+1. Re-check the preconditions. A stale approval stops the resume. A pending sign-off is asked again.
+2. Compare the `detailRev`, `designRev` and `scopeHash` at the top of `progress.md` with the current approved ones. If they differ, the work was done for an older version. Mark every done task as needing re-check, re-plan against the new revisions (large), and tell the dev what changed.
 3. Continue from the last task not marked done.
 4. Re-run that task's gate first, since its last state is unknown.

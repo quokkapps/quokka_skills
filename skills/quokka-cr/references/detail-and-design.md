@@ -9,11 +9,11 @@
 3. Search the list for a similar open CR. If one exists, show it and ask whether to add to it instead.
 4. Allocate the next id (`lists.md`), write the row, and record `<system>:<login>` as the proposer.
 
-Next: `/quokka:cr approve <id>`.
+The row needs no approval. Next: `/quokka:cr detail <id>`, unless the dev says the CR is simple enough to skip the detail (`identity-and-gates.md` §Skipping a part).
 
 ## Detail
 
-`detail <CR-id>` writes the CR detail doc. It needs an approved, non-stale row.
+`detail <CR-id>` writes the CR detail doc. It needs only the row.
 
 1. **Explore the real code** for every repo role the surfaces map to.
    - Use CodeGraph when the clone has `.codegraph/` (`codegraph explore "<question>"`). Otherwise use grep/find.
@@ -35,13 +35,13 @@ Next: `/quokka:cr approve <id>`.
 
 Keep project rules in mind, such as the INS rules in `deviceRules` (never name a nurse, SOS is single tap). A proposal that breaks one is wrong. Say so rather than writing it.
 
-Next: `/quokka:cr approve <id>`.
+Next: `/quokka:cr design <id>`, unless the dev skips the design.
 
 ## Design
 
-`design <CR-id>` builds the CR design canvas. It needs an approved, non-stale detail.
+`design <CR-id>` builds the CR design canvas. It needs the detail doc, or a skipped detail with a `scope` on the row. If the detail is missing, offer to generate it first.
 
-1. Read the approved detail at its approved revision.
+1. Read the detail (or the row's `scope`).
 2. Read each touched surface's `*-Design-Main` canvas and `*-DS`. Match what is there: components, spacing, type, copy tone. A design that looks foreign to the main canvas is wrong.
 3. Create a Claude Design canvas named `<PFX>-CR-<n>-Design <title>`.
    - Use `Artifact quickstart` with intent `design`, and the surface DS link (`design_systems: false`, then read the DS by its link).
@@ -56,6 +56,6 @@ Next: `/quokka:cr approve <id>`.
 6. Put the canvas URL on the row (`artifacts.design`).
 7. Open it for the dev.
 
-If the design forces a change in the detail (a missing state, a new edge case), update the detail too. That makes the detail approval stale, so tell the dev to re-approve the detail before the design.
+If the design forces a change in the detail (a missing state, a new edge case), update the detail too, and tell the dev what changed.
 
-Next: `/quokka:cr approve <id>`.
+Next: the dev reviews the detail and design, then runs `/quokka:cr approve <id>`.

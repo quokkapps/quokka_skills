@@ -126,10 +126,13 @@ execFileSync('node', [installer], { cwd: tmp4, stdio: 'pipe', env: env4 });
 
 // crInstalledGlobally
 const gCmd = path.join(home4, '.claude', 'commands', 'quokka', 'cr.md');
+const gHelp = path.join(home4, '.claude', 'commands', 'quokka', 'cr-help.md');
+const gSetup = path.join(home4, '.claude', 'commands', 'quokka', 'cr-setup.md');
+const gHealth = path.join(home4, '.claude', 'commands', 'quokka', 'cr-health.md');
 const gSkill = path.join(home4, '.claude', 'skills', 'quokka-cr', 'SKILL.md');
 const gQg = path.join(home4, '.quokka', 'cr', 'projects', 'qg.json');
 const gIns = path.join(home4, '.quokka', 'cr', 'projects', 'ins.json');
-for (const p of [gCmd, gSkill, gQg, gIns]) {
+for (const p of [gCmd, gHelp, gSetup, gHealth, gSkill, gQg, gIns]) {
   assert.ok(fs.existsSync(p), `expected global install of ${p}`);
 }
 
@@ -137,6 +140,10 @@ for (const p of [gCmd, gSkill, gQg, gIns]) {
 assert.ok(
   !fs.existsSync(path.join(tmp4, '.claude', 'commands', 'quokka', 'cr.md')),
   'cr.md must not be installed per-project (global only)'
+);
+assert.ok(
+  !fs.existsSync(path.join(tmp4, '.claude', 'commands', 'quokka', 'cr-help.md')),
+  'cr-help.md must not be installed per-project (global only)'
 );
 assert.ok(
   !fs.existsSync(path.join(tmp4, '.claude', 'skills', 'quokka-cr')),
@@ -168,7 +175,7 @@ assert.ok(fs.existsSync(localCfg), 'local machine file must survive reinstall');
 
 // uninstallKeepsLocal
 execFileSync('node', [installer, '--uninstall'], { cwd: tmp4, stdio: 'pipe', env: env4 });
-for (const p of [gCmd, gSkill, gQg, gIns]) {
+for (const p of [gCmd, gHelp, gSetup, gHealth, gSkill, gQg, gIns]) {
   assert.ok(!fs.existsSync(p), `expected uninstall to remove ${p}`);
 }
 assert.ok(fs.existsSync(path.join(localDir, 'acme.json')), 'uninstall must keep local projects');
